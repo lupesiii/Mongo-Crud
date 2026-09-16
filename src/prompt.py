@@ -62,26 +62,25 @@ def menu_usuario():
             Choice(3, name="Buscar todos os usuários"),
             Choice(4, name="Atualizar usuário"),
             Choice(5, name="Remover usuário"),
-            Choice(6, name="sair"),
+            Choice(6, name="Voltar"),
         ],
         ).execute()
     
         match opcao:
             case 1:
                 print("Menu Usuario")
-    
             case 2:
                 email = inquirer.text(message="Digite o email do usuário: ", validate=verificar_vazio).execute()
                 buscar_usuario(email)
-    
             case 3:
                 print("Menu produto")
-    
             case 4:
                 print("Menu compras")
-    
             case 5:
-                break
+                print("ede")
+            case 6:
+                console.clear()
+                menu_principal()
             case _:
                 print("Opção inválida");
 
