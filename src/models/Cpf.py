@@ -1,18 +1,30 @@
-class Cpf:
-  def __init__(self, cpf: str):
-    self.cpf = self.limpar(cpf)
-    
-  @staticmethod
-  def limpar(cpf: str):
-    return ''.join(filter(str.isdigit, cpf))
+from pydantic import BaseModel, model_validator
 
+def limpar_cpf(cpf):
+  return ''.join(filter(str.isdigit, cpf))
+class Cpf(BaseModel):
+  cpf: str
+  
+  @model_validator(mode='before')
+  def limpar(cls, values):
+    if isinstance(values, dict):
+      values['cpf'] = ''.join(filter(str.isdigit, values['cpf']))
+    else:
+      values = {"cpf": ''.join(filter(str.isdigit, values))}
+    return values
+
+  @model_validator(mode='after')
   def verificar(self):
     if len(self.cpf) != 11:
-      return False
-    
-    if self.verificar_digito(9) and self.verificar_digito(10):
-      return True
-    return False
+      raise ValueError('CPF deve possuir 11 dígitos')
+
+    if not self.verificar_digito(9):
+        raise ValueError('Primeiro dígito verificador inválido')
+
+    if not self.verificar_digito(10):
+        raise ValueError('Segundo dígito verificador inválido')
+
+    return self
   
   def verificar_digito(self, posicao: int):
     qnt_digitos = posicao

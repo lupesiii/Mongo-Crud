@@ -1,12 +1,13 @@
 from models.Cpf import Cpf
 from models.Endereco import Endereco
 from models.Favorito import Favorito
+from pydantic import BaseModel, EmailStr
 
 
-class Usuario:
+class Usuario(BaseModel):
   nome: str
   sobrenome: str
-  email: str
+  email: EmailStr
   senha: str
   cpf: Cpf
   favoritos: list[Favorito]
