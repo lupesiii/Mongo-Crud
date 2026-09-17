@@ -4,14 +4,14 @@ from models.Email import Email
 from pydantic import ValidationError as PydanticValidationError
 
 
-def verificar_vazio(texto):
+def verificarVazio(texto):
     if len(texto.strip()) == 0:
         raise ValidationError(message="Este campo não pode ficar vazio!")
     return True
 
 
-def verificar_cpf(cpf):
-    verificar_vazio(cpf)
+def verificarCpf(cpf):
+    verificarVazio(cpf)
 
     try:
         CPF = Cpf(cpf=cpf)
@@ -24,8 +24,8 @@ def verificar_cpf(cpf):
 
     return True
 
-def verificar_email(email):
-    verificar_vazio(email)
+def verificarEmail(email):
+    verificarVazio(email)
 
     try:
         Email(email=email)

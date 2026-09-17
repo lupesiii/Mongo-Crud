@@ -2,11 +2,10 @@ from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from rich.console import Console
 from rich.panel import Panel
-from db.usuario import buscar_todos_usuarios, buscar_usuario, cadastrar_usuario, deletar_usuario, input_enderecos
-from lib.inquirrerPy import verificar_vazio, verificar_cpf, verificar_email
-from models.Cpf import Cpf, limpar_cpf
-from models.Email import Email
-from models.Usuario import Usuario
+from cli import exibirErro, getUsuario
+from db.usuario import buscarTodosUsuarios, buscarUsuario, cadastrarUsuario, deletarUsuario
+from lib.inquirrerPy import verificarEmail, verificarVazio
+from models.ErroException import ErroException
 
 console = Console()
 
@@ -44,9 +43,9 @@ def menu_principal():
                 print("Menu compras")
                         
             case 5:
-                return
+                break
             case _:
-                print("Opção inválida");
+                exibirErro("Opção inválida")
 
 def menu_usuario():
     while True:
@@ -71,31 +70,38 @@ def menu_usuario():
     
         match opcao:
             case 1:
-                nome = inquirer.text(message="Digite o nome do usuário: ", validate=verificar_vazio).execute()
-                sobrenome = inquirer.text(message="Digite o sobrenome do usuário: ", validate=verificar_vazio).execute()
-                email = inquirer.text(message="Digite o email do usuário: ", validate=verificar_email).execute()
-                senha = inquirer.secret(message="Digite a senha do usuário: ", validate=verificar_vazio).execute()
-                cpf = inquirer.text(message="Digite o CPF do usuário: ", validate=verificar_cpf).execute()
-                enderecos = input_enderecos()
-            
-                cpf_validado = Cpf(cpf=limpar_cpf(cpf))
-                novoUsuario = Usuario(nome=nome, sobrenome=sobrenome, email=email, senha=senha, cpf=cpf_validado.cpf, favoritos=[], enderecos=enderecos)
-                cadastrar_usuario(novoUsuario)
+                novoUsuario = getUsuario()
+                try:    
+                    cadastrarUsuario(novoUsuario)
+                except ErroException as e:
+                    exibirErro(e.mensagem)
             case 2:
-                email = inquirer.text(message="Digite o email do usuário: ", validate=verificar_vazio).execute()
-                buscar_usuario(email)
+                email = inquirer.text(message="Digite o email do usuário: ", validate=verificarEmail).execute()
+                try:
+                    buscarUsuario(email)
+                except ErroException as e:
+                    exibirErro(e.mensagem)
             case 3:
-                buscar_todos_usuarios()
+                try:
+                    buscarTodosUsuarios()
+                except ErroException as e:
+                    exibirErro(e.mensagem)
             case 4:
                 print("Menu compras")
             case 5:
-                email = inquirer.text(message="Digite o email do usuário: ", validate=verificar_vazio).execute()
-                deletar_usuario(email)
+                email = inquirer.text(message="Digite o email do usuário: ", validate=verificarVazio).execute()
+                try:    
+                    deletarUsuario(email)
+                except ErroException as e:
+                    exibirErro(e.mensagem)
             case 6:
                 console.clear()
                 break
             case _:
-                print("Opção inválida");
+                exibirErro("Opção inválida")
 
-menu_principal()
+try:
+    menu_principal()
+except KeyboardInterrupt:
+    exibirErro("Forçando interrupção do sistema")
     
