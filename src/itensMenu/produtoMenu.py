@@ -1,18 +1,14 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
+from db.produto import cadastrarProduto, buscarProdutos, buscarTodosProdutos
 from db.usuario import loginUsuario
-from db.vendedor import (
-    buscarTodosVendedores,
-    buscarVendedor,
-    cadastrarVendedor,
-    deletarVendedor,
-)
+from db.vendedor import buscarVendedor
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro
+from cli import exibirErro, getProduto
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
-from models.Vendedor import Vendedor
+from models.Vendedor import Vendedor, VendedorProduto
 
 
 def menuProduto():
@@ -28,7 +24,7 @@ def menuProduto():
             message="Escolha a ação desejada: ",
             choices=[
                 Choice(1, name="Cadastrar Produto"),
-                Choice(2, name="Buscar produto por id"),
+                Choice(2, name="Buscar produtos"),
                 Choice(3, name="Buscar todos os produtos"),
                 Choice(4, name="Atualizar produto"),
                 Choice(5, name="Remover produto"),
@@ -46,31 +42,26 @@ def menuProduto():
                 ).execute()
 
                 try:
-                    usuarioId = loginUsuario(email, senha)
-                    nomeLoja = inquirer.text(
-                        message="Digite o nome da loja: ", validate=verificarVazio
-                    ).execute()
-
-                    vendedor = Vendedor(
-                        nome_loja=nomeLoja,
-                        usuario_id=usuarioId,
-                        produtos_cadastrados=[],
-                        vendas=[],
+                    loginUsuario(email, senha)
+                    vendedor = buscarVendedor(email, False)
+                    vendedorProduto = VendedorProduto(
+                        vendedor_id=vendedor.id, nome_loja=vendedor.nome_loja
                     )
-                    cadastrarVendedor(vendedor)
+                    produto = getProduto(vendedorProduto)
+                    cadastrarProduto(produto)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
-                email = inquirer.text(
-                    message="Digite o email do vendedor: ", validate=verificarEmail
+                nome = inquirer.text(
+                    message="Que produto deseja encontrar:", validate=verificarVazio
                 ).execute()
                 try:
-                    buscarVendedor(email)
+                    buscarProdutos(nome)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 3:
                 try:
-                    buscarTodosVendedores()
+                    buscarTodosProdutos()
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:

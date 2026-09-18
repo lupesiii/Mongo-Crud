@@ -1,6 +1,5 @@
 from pydantic import ValidationError
 from rich.panel import Panel
-
 from cli import printarVendedor
 from db.usuario import existeUsuario
 from lib.rich import console
@@ -44,7 +43,10 @@ def buscarVendedor(email: str, allow_print=True):
     if not vendedor:
         raise ErroException("Vendedor não encontrado")
 
-    vendedor = dict(vendedor)
+    try:
+        vendedor = Vendedor.model_validate(vendedor)
+    except ValidationError:
+        raise ErroException("Erro ao converter vendedor")
 
     if allow_print:
         printarVendedor(vendedor["nome_loja"], vendedor["produtos_cadastrados"])
@@ -99,7 +101,7 @@ def deletarVendedor(email: str):
     vendedor = buscarVendedor(email, False)
 
     try:
-        db.vendedores.delete_one({"_id": vendedor["_id"]})
+        db.vendedores.delete_one({"_id": vendedor.id})
         console.print(
             Panel(
                 f"[bold green]✓ Vendedor deletado com sucesso![/bold green]",

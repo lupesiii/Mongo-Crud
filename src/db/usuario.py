@@ -43,12 +43,13 @@ def buscarUsuario(email: str, allow_Print=True):
         )
         return
 
-    user = dict(user)
-
     if allow_Print:
-        printarUsuario(
-            user["nome"], user["email"], user["favoritos"], user["enderecos"]
-        )
+        try:
+            user = Usuario.model_validate(user)
+        except BaseException as e:
+            raise ErroException("Erro ao converter usuário")
+
+        printarUsuario(user)
     return user
 
 
@@ -67,9 +68,12 @@ def buscarTodosUsuarios():
         )
 
     for user in usuarios:
-        printarUsuario(
-            user["nome"], user["email"], user["favoritos"], user["enderecos"]
-        )
+        try:
+            user = Usuario.model_validate(user)
+        except BaseException as e:
+            continue
+
+        printarUsuario(user)
 
 
 def cadastrarUsuario(user: Usuario):

@@ -4,14 +4,23 @@ from rich.console import Group
 from lib.rich import console
 from rich.panel import Panel
 from rich.table import Table
-from lib.inquirrerPy import verificarCpf, verificarEmail, verificarVazio
+from lib.inquirrerPy import (
+    transformarEmCentavos,
+    verificarCpf,
+    verificarDecimal,
+    verificarEmail,
+    verificarInteiro,
+    verificarVazio,
+)
 from models.Cpf import Cpf, limparCpf
 from models.Endereco import Endereco
+from models.Produto import Produto
 from models.Usuario import Usuario
+from models.Vendedor import VendedorProduto
 
 
-def printarUsuario(nome: str, email: str, favoritos: list, enderecos: list):
-    if len(favoritos) > 0:
+def printarUsuario(usuario: Usuario):
+    if len(usuario.favoritos) > 0:
         tabelaFavoritos = Table(
             title="[bold yellow]⭐ Favoritos[/bold yellow]",
             border_style="cyan",
@@ -21,14 +30,14 @@ def printarUsuario(nome: str, email: str, favoritos: list, enderecos: list):
         tabelaFavoritos.add_column("Produto", style="bold white")
         tabelaFavoritos.add_column("Preço", justify="right", style="green")
 
-        for fav in favoritos:
+        for fav in usuario.favoritos:
             tabelaFavoritos.add_row(
-                fav["id_produto"],
-                fav["nome"],
-                f"R$ {int(fav['precoEmCentavos']) / 100:.2f}",
+                fav.id_produto,
+                fav.nome,
+                f"R$ {int(fav.precoEmCentavos) / 100:.2f}",
             )
 
-    if len(enderecos) > 0:
+    if len(usuario.enderecos) > 0:
         tabelaEnderecos = Table(
             title="[bold orange3]🛣️ Endereços[/bold orange3]",
             border_style="cyan",
@@ -39,22 +48,20 @@ def printarUsuario(nome: str, email: str, favoritos: list, enderecos: list):
         tabelaEnderecos.add_column("Cidade", justify="center", style="white")
         tabelaEnderecos.add_column("Default", justify="center", style="dim")
 
-        for end in enderecos:
-            enderecoCompleto = "".join([end["rua"], end["numero"], ",", end["bairro"]])
-            tabelaEnderecos.add_row(
-                enderecoCompleto, end["cidade"], str(end["default"])
-            )
+        for end in usuario.enderecos:
+            enderecoCompleto = "".join([end.rua, end.numero, ",", end.bairro])
+            tabelaEnderecos.add_row(enderecoCompleto, end.cidade, str(end.default))
 
     content = Group(
-        tabelaFavoritos if len(favoritos) > 0 else "Nenhum favorito adicionado",
-        tabelaEnderecos if len(enderecos) > 0 else "Nenhum endereço adicionado",
+        tabelaFavoritos if len(usuario.favoritos) > 0 else "Nenhum favorito adicionado",
+        tabelaEnderecos if len(usuario.enderecos) > 0 else "Nenhum endereço adicionado",
     )
 
     console.print(
         Panel(
             content,
-            title=f"[bold cyan]👤 {nome}[/bold cyan]",
-            subtitle=f"[italic]{email}[/italic]",
+            title=f"[bold cyan]👤 {usuario.nome}[/bold cyan]",
+            subtitle=f"[italic]{usuario.email}[/italic]",
             border_style="blue",
             padding=(1, 1),
             expand=False,
@@ -96,6 +103,40 @@ def printarVendedor(nomeLoja: str, produtosCadastrados: list):
     )
 
 
+def printarProduto(produto: Produto):
+    tabela = Table(
+        border_style="cyan",
+        show_lines=True,
+    )
+
+    tabela.add_column("Nome", style="bold yellow", justify="left")
+    tabela.add_column("Descrição", style="bold white", justify="left")
+    tabela.add_column("Preço", style="bold white", justify="left")
+    tabela.add_column("Estoque", style="bold white", justify="center")
+
+    vendedor = produto.vendedor
+
+    corEstoque = (
+        "green" if produto.estoque > 5 else "yellow" if produto.estoque > 0 else "red"
+    )
+    tabela.add_row(
+        produto.nome,
+        produto.descricao,
+        f"[green]R$ {int(produto.precoEmCentavos) / 100:.2f}[/green]",
+        f"[{corEstoque}] {produto.estoque} [/{corEstoque}]",
+    )
+
+    console.print(
+        Panel(
+            tabela,
+            title=f"[bold cyan]🛍️ {vendedor.nome_loja}[/bold cyan]",
+            border_style="blue",
+            padding=(1, 1),
+            expand=False,
+        )
+    )
+
+
 def getUsuario():
     nome = inquirer.text(
         message="Digite o nome do usuário: ", validate=verificarVazio
@@ -123,6 +164,34 @@ def getUsuario():
         cpf=cpf_validado.cpf,
         favoritos=[],
         enderecos=enderecos,
+    )
+
+
+def getProduto(vendedorProduto: VendedorProduto):
+    nome = inquirer.text(
+        message="Digite o nome do produto: ", validate=verificarVazio
+    ).execute()
+    descricao = inquirer.text(
+        message="Digite a descrição do produto: ", validate=verificarVazio
+    ).execute()
+    precoEmCentavos = inquirer.text(
+        message="Digite o preco do produto: ",
+        validate=verificarDecimal,
+    ).execute()
+    estoque = inquirer.text(
+        message="Digite a quantidade do estoque: ", validate=verificarInteiro
+    ).execute()
+    imagem = inquirer.text(
+        message="Digite a url da imagem do produto: ", validate=verificarVazio
+    ).execute()
+
+    return Produto(
+        nome=nome,
+        descricao=descricao,
+        precoEmCentavos=transformarEmCentavos(precoEmCentavos),
+        estoque=estoque,
+        imagem=imagem,
+        vendedor=vendedorProduto,
     )
 
 
