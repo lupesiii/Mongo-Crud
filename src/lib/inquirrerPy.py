@@ -24,6 +24,7 @@ def verificarCpf(cpf):
 
     return True
 
+
 def verificarEmail(email):
     verificarVazio(email)
 
