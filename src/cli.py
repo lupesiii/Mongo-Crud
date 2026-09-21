@@ -228,7 +228,7 @@ def getProduto(vendedorProduto: VendedorProduto):
         nome=nome.strip(),
         descricao=descricao.strip(),
         precoEmCentavos=transformarEmCentavos(precoEmCentavos),
-        estoque=estoque.strip(),
+        estoque=estoque,
         imagem=imagem.strip(),
         vendedor=vendedorProduto,
     )
@@ -297,7 +297,7 @@ def getUsuarioUpdate(usuario: Usuario):
         raise ErroException("Coleta de dados cancelada pelo usuário")
 
     dadosPreenchidos = {
-        chave: valor.trim() for chave, valor in dados.items() if valor
+        chave: valor.strip() if type(valor) is str else valor for chave, valor in dados.items() if valor
     }
 
     try:
@@ -316,7 +316,7 @@ def getVendedorUpdate(nomeLoja: str):
     if not nomeLoja:
         raise ErroException("Coleta de dados cancelada pelo usuário")
 
-    return nomeLoja.trim()
+    return nomeLoja.strip()
 
 
 def getProdutoUpdate(produto: Produto):
@@ -347,7 +347,7 @@ def getProdutoUpdate(produto: Produto):
         raise ErroException("Preço ou estoque informado em formato inválido")
  
     dadosPreenchidos = {
-        chave: valor.trim() for chave, valor in dados.items() if valor is not None
+        chave: valor.strip() if type(valor) is str else valor for chave, valor in dados.items() if valor is not None
     }
  
     if not dadosPreenchidos:

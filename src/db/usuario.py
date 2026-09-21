@@ -207,13 +207,5 @@ def loginUsuario(email: str, senha: str):
     if not usuario:
         raise ErroException("Email ou senha inválido")
 
-    console.print(
-        Panel(
-            f"[bold green]✓ Usuario {usuario.get("nome")} logado![/bold green]",
-            title="Login",
-            border_style="green",
-        )
-    )
-
     return str(usuario.get("_id"))
 

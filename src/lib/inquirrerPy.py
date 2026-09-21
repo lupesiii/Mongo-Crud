@@ -74,7 +74,7 @@ def transformarEmCentavos(valor):
 
 
 def transformarEmReais(valor):
-    valor = transformarEmCentavos(valor)
+    valor = str(transformarEmCentavos(valor))
 
     reais = valor[:-2]
     centavos = valor[-2:]
