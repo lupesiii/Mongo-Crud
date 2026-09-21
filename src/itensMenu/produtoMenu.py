@@ -1,11 +1,12 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
-from db.produto import cadastrarProduto, buscarProdutos, buscarTodosProdutos
+from db.produto import cadastrarProduto, buscarProdutos, buscarTodosProdutos, buscarProdutoPorId
+from db.transactions import deletarProdutoTransaction, cadastrarProdutoTransaction
 from db.usuario import loginUsuario
-from db.vendedor import buscarVendedor
+from db.vendedor import buscarVendedor, removerProdutoCadastrado
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro, getProduto
+from cli import exibirErro, getProduto, printarProdutosCadastrados
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
 from models.Vendedor import Vendedor, VendedorProduto
@@ -45,10 +46,10 @@ def menuProduto():
                     loginUsuario(email, senha)
                     vendedor = buscarVendedor(email, False)
                     vendedorProduto = VendedorProduto(
-                        vendedor_id=vendedor.id, nome_loja=vendedor.nome_loja
+                        vendedor_id=vendedor.id, nome_loja=vendedor.nomeLoja
                     )
                     produto = getProduto(vendedorProduto)
-                    cadastrarProduto(produto)
+                    cadastrarProdutoTransaction(vendedor, produto)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
@@ -65,13 +66,35 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                print("Menu compras")
+                email = inquirer.text(
+                    message="Digite o email do usuário: ", validate=verificarEmail
+                ).execute()
+                senha = inquirer.text(
+                    message="Digite a senha do usuário: ", validate=verificarVazio
+                ).execute()
+ 
+                try:
+                    loginUsuario(email, senha)
+                    vendedor = buscarVendedor(email, False)
+                    produtoId = printarProdutosCadastrados(vendedor.produtosCadastrados)
+                    produto = buscarProdutoPorId(produtoId)
+                    produtoUpdate = getProdutoUpdate(produto)
+                    atualizarProdutoTransaction(vendedor, produtoId, produtoUpdate)
+                except ErroException as e:
+                    exibirErro(e.mensagem)
             case 5:
                 email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarVazio
+                    message="Digite o email do usuário: ", validate=verificarEmail
                 ).execute()
+                senha = inquirer.text(
+                    message="Digite a senha do usuário: ", validate=verificarVazio
+                ).execute()
+
                 try:
-                    deletarVendedor(email)
+                    loginUsuario(email, senha)
+                    vendedor = buscarVendedor(email, False)
+                    produtoId = printarProdutosCadastrados(vendedor.produtosCadastrados)
+                    deletarProdutoTransaction(vendedor, produtoId)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 6:

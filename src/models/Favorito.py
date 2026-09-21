@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class Favorito(BaseModel):
-    id_produto: str | None = Field(default=None)
+    produtoId: str | None = Field(default=None, alias="id_produto")
     nome: str
-    imagem: HttpUrl
+    imagem: str
     precoEmCentavos: int = Field(ge=0)

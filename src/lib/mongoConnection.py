@@ -10,7 +10,6 @@ client = MongoClient(url, server_api=ServerApi("1"))
 
 try:
     client.mercado_livre.command("ping")
-    print("Ping db test successful")
 except Exception as e:
     print(e)
 

@@ -6,13 +6,15 @@ from db.vendedor import (
     buscarVendedor,
     cadastrarVendedor,
     deletarVendedor,
+    atualizarVendedor
 )
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro
+from cli import exibirErro, getLogin, getVendedorUpdate
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
 from models.Vendedor import Vendedor
+from bson import ObjectId
 
 
 def menuVendedor():
@@ -38,13 +40,7 @@ def menuVendedor():
 
         match opcao:
             case 1:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
-
+                email, senha = getLogin()
                 try:
                     usuarioId = loginUsuario(email, senha)
                     nomeLoja = inquirer.text(
@@ -52,9 +48,9 @@ def menuVendedor():
                     ).execute()
 
                     vendedor = Vendedor(
-                        nome_loja=nomeLoja,
-                        usuario_id=usuarioId,
-                        produtos_cadastrados=[],
+                        nomeLoja=nomeLoja,
+                        usuarioId=usuarioId,
+                        produtosCadastrados=[],
                         vendas=[],
                     )
                     cadastrarVendedor(vendedor)
@@ -74,12 +70,18 @@ def menuVendedor():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                print("Menu compras")
-            case 5:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarVazio
-                ).execute()
+                email, senha = getLogin()
                 try:
+                    loginUsuario(email, senha)
+                    vendedor = buscarVendedor(email, False)
+                    nomeLoja = getVendedorUpdate(vendedor.nomeLoja)
+                    atualizarVendedor(vendedor.id, nomeLoja)
+                except ErroException as e:
+                    exibirErro(e.mensagem)
+            case 5:
+                email, senha = getLogin()
+                try:
+                    loginUsuario(email, senha)
                     deletarVendedor(email)
                 except ErroException as e:
                     exibirErro(e.mensagem)

@@ -1,10 +1,11 @@
 from cli import printarUsuario
 from models.ErroException import ErroException
-from models.Usuario import Usuario
+from models.Usuario import Usuario, UsuarioUpdate
 from lib.mongoConnection import db
 from rich.panel import Panel
 from pydantic import ValidationError
 from lib.rich import console
+from bson import ObjectId
 
 
 def existeUsuario(email: str):
@@ -43,14 +44,33 @@ def buscarUsuario(email: str, allow_Print=True):
         )
         return
 
+    try:
+        user = Usuario.model_validate(user)
+    except BaseException as e:
+        print(e)
+        raise ErroException("Erro ao converter usuário")
+    
     if allow_Print:
-        try:
-            user = Usuario.model_validate(user)
-        except BaseException as e:
-            raise ErroException("Erro ao converter usuário")
-
         printarUsuario(user)
+    
     return user
+
+
+def buscarUsuarioId(email: str):
+    email = email.strip()
+ 
+    if not email:
+        raise ErroException("Valor nulo não é permitido")
+ 
+    try:
+        user = db.usuarios.find_one({"email": email})
+    except BaseException:
+        raise ErroException("Erro ao recuperar usuário")
+ 
+    if not user:
+        raise ErroException("Usuário não encontrado")
+ 
+    return str(user.get("_id"))
 
 
 def buscarTodosUsuarios():
@@ -90,16 +110,59 @@ def cadastrarUsuario(user: Usuario):
     user_dump = {
         key: value["cpf"] if key == "cpf" else value for key, value in user_dump.items()
     }
-
     try:
         db.usuarios.insert_one(user_dump)
-    except BaseException:
+    except BaseException as e:
+        print(e)
         raise ErroException("Erro ao criar registro do usuário")
 
     console.print(
         Panel(
             f"[bold green]✓ Usuário {user.nome} cadastrado com sucesso![/bold green]",
             title="Cadastro",
+            border_style="green",
+        )
+    )
+
+
+def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
+    try:
+        usuarioUpdate = UsuarioUpdate.model_validate(usuario)
+    except ValidationError:
+        raise ErroException("Formato de usuário não suportado")
+
+    usuarioUpdateDump = usuarioUpdate.model_dump(exclude={"favoritos", "enderecos"}, exclude_unset=True, exclude_none=True)
+
+    favoritosIds = []
+    if usuario.favoritos:
+        favoritosIds = usuario.favoritos
+
+    enderecosIds = []
+    if usuario.enderecos:
+        enderecosIds = usuario.enderecos
+
+    if not usuarioUpdateDump and not usuario.favoritos and not usuario.enderecos:
+        raise ErroException("Nenhum campo para atualizar foi informado")
+
+    try:
+        resultado = db.usuarios.update_one(
+            {"_id": ObjectId(usuarioId)},
+            {
+                "$set": usuarioUpdateDump,
+                "$pull": {
+                    "favoritos": {"id_produto": {"$in": favoritosIds}},
+                    "enderecos": {"id": {"$in": enderecosIds}}
+                }
+            }
+        )
+    except Exception as e:
+        print(e)
+        raise ErroException("Erro ao atualizar usuário")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Usuario {usuario.nome} atualizado![/bold green]",
+            title="Update",
             border_style="green",
         )
     )
@@ -117,15 +180,16 @@ def deletarUsuario(email):
 
     try:
         db.usuarios.delete_one({"email": email})
-        console.print(
-            Panel(
-                f"[bold green]✓ Usuário deletado com sucesso![/bold green]",
-                title="Delete",
-                border_style="green",
-            )
-        )
     except BaseException:
         raise ErroException("Usuário não foi deletado")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Usuário deletado com sucesso![/bold green]",
+            title="Delete",
+            border_style="green",
+        )
+    )
 
 
 def loginUsuario(email: str, senha: str):
@@ -152,3 +216,4 @@ def loginUsuario(email: str, senha: str):
     )
 
     return str(usuario.get("_id"))
+

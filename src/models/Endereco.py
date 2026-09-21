@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, BeforeValidator
+from typing import Annotated
 
 
 class Endereco(BaseModel):
-    id: str | None = Field(default=None, alias="_id")
+    id: str
     rua: str
     numero: str
     bairro: str

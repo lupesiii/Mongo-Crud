@@ -1,7 +1,7 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
-from cli import exibirErro, getUsuario
-from db.usuario import buscarTodosUsuarios, buscarUsuario, cadastrarUsuario, deletarUsuario
+from cli import exibirErro, getUsuario, getLogin, getUsuarioUpdate
+from db.usuario import buscarTodosUsuarios, buscarUsuario, cadastrarUsuario, deletarUsuario, loginUsuario, updateUsuario
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from lib.rich import console
 from rich.panel import Panel
@@ -48,9 +48,16 @@ def menuUsuario():
         except ErroException as e:
             exibirErro(e.mensagem)
       case 4:
-        print("Menu compras")
+        email, senha = getLogin()
+        try:
+          usuarioId = loginUsuario(email, senha)
+          usuario = buscarUsuario(email, False)
+          usuarioUpdate = getUsuarioUpdate(usuario)
+          updateUsuario(usuarioUpdate, usuarioId)
+        except ErroException as e:
+          exibirErro(e.mensagem)
       case 5:
-        email = inquirer.text(message="Digite o email do usuário: ", validate=verificarVazio).execute()
+        email = inquirer.text(message="Digite o email do usuário: ", validate=verificarEmail).execute()
         try:    
             deletarUsuario(email)
         except ErroException as e:

@@ -5,7 +5,9 @@ from db.usuario import existeUsuario
 from lib.rich import console
 from lib.mongoConnection import db
 from models.ErroException import ErroException
-from models.Vendedor import Vendedor
+from models.Vendedor import Vendedor, ProdutosCadastrados
+from models.Produto import Produto
+from bson import ObjectId
 
 
 def existeVendedor(usuarioId: str):
@@ -49,7 +51,7 @@ def buscarVendedor(email: str, allow_print=True):
         raise ErroException("Erro ao converter vendedor")
 
     if allow_print:
-        printarVendedor(vendedor["nome_loja"], vendedor["produtos_cadastrados"])
+        printarVendedor(vendedor.nomeLoja, vendedor.produtosCadastrados)
 
     return vendedor
 
@@ -57,10 +59,17 @@ def buscarVendedor(email: str, allow_print=True):
 def buscarTodosVendedores():
     try:
         vendedores = list(db.vendedores.find().sort("nome_loja"))
-    except BaseException:
+    except Exception:
         raise ErroException("Erro ao buscar vendedores")
 
-    if len(vendedores) == 0:
+    vendedoresValidados: list[Vendedor] = []
+    for vendedor in vendedores:
+        try:
+            vendedoresValidados.append(Vendedor.model_validate(vendedor))
+        except ValidationError:
+            continue
+
+    if len(vendedoresValidados) == 0:
         console.print(
             Panel.fit(
                 "Nenhum vendedor encontrado",
@@ -68,8 +77,8 @@ def buscarTodosVendedores():
             )
         )
 
-    for vendedor in vendedores:
-        printarVendedor(vendedor["nome_loja"], vendedor["produtos_cadastrados"])
+    for vendedor in vendedoresValidados:
+        printarVendedor(vendedor.nomeLoja, vendedor.produtosCadastrados)
 
 
 def cadastrarVendedor(vendedor: Vendedor):
@@ -78,20 +87,50 @@ def cadastrarVendedor(vendedor: Vendedor):
     except ValidationError:
         raise ErroException("Formato de vendedor não suportado")
 
-    exists = existeVendedor(vendedor.usuario_id)
+    exists = existeVendedor(vendedor.usuarioId)
     if exists:
         raise ErroException("Usuário já possui cadastro de vendedor")
 
     try:
-        db.vendedores.insert_one(vendedor.model_dump())
+        db.vendedores.insert_one(vendedor.model_dump(by_alias=True, exclude_none=True))
     except BaseException as e:
         print(e)
         raise ErroException("Erro ao criar registro do usuário")
 
     console.print(
         Panel(
-            f"[bold green]✓ Vendedor {vendedor.nome_loja} cadastrado com sucesso![/bold green]",
+            f"[bold green]✓ Vendedor {vendedor.nomeLoja} cadastrado com sucesso![/bold green]",
             title="Cadastro",
+            border_style="green",
+        )
+    )
+
+
+def atualizarVendedor(vendedorId: str, nomeLoja: str):
+    vendedorId = vendedorId.strip()
+    nomeLoja = nomeLoja.strip()
+
+    if not vendedorId or not nomeLoja:
+        raise ErroException("Valores nulos não são permitidos")
+
+    try:
+        resultado = db.vendedores.update_one(
+            {"_id": ObjectId(vendedorId)},
+            {"$set": {
+                "nome_loja": nomeLoja
+                }
+            },
+        )
+    except Exception as e:
+        raise ErroException(e)
+
+    if resultado.matched_count == 0:
+        raise ErroException("Vendedor não encontrado")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Vendedor atualizado com sucesso![/bold green]",
+            title="Update",
             border_style="green",
         )
     )
@@ -100,14 +139,87 @@ def cadastrarVendedor(vendedor: Vendedor):
 def deletarVendedor(email: str):
     vendedor = buscarVendedor(email, False)
 
+    print(vendedor)
     try:
-        db.vendedores.delete_one({"_id": vendedor.id})
-        console.print(
-            Panel(
-                f"[bold green]✓ Vendedor deletado com sucesso![/bold green]",
-                title="Delete",
-                border_style="green",
-            )
-        )
+        resultado = db.vendedores.delete_one({"_id": ObjectId(vendedor.id)})
+
+        if resultado.deleted_count == 0:
+            raise ErroException("Vendedor não encontrado")
     except BaseException:
         raise ErroException("Vendedor não foi deletado")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Vendedor deletado com sucesso![/bold green]",
+            title="Delete",
+            border_style="green",
+        )
+    )
+
+
+def cadastrarProdutoCadastrado(vendedor: Vendedor , produto: Produto, session):
+    try:
+        resultado = db.vendedores.update_one(
+            {"_id": ObjectId(vendedor.id)},
+            {"$push": {
+                "produtos_cadastrados": {
+                    "id_produto": produto.id,
+                    "nome": produto.nome,
+                    "precoEmCentavos": produto.precoEmCentavos,
+                    }
+                }
+            },
+            session=session
+        )
+    except Exception as e:
+        raise ErroException(e)
+
+    if resultado.matched_count == 0:
+        raise ErroException("Vendedor não encontrado")
+
+
+def atualizarProdutoCadastrado(vendedor: Vendedor, produtoId: str, produtoUpdateDump: dict, session):
+    camposAtualizados = {}
+ 
+    if "nome" in produtoUpdateDump:
+        camposAtualizados["produtos_cadastrados.$.nome"] = produtoUpdateDump["nome"]
+    if "precoEmCentavos" in produtoUpdateDump:
+        camposAtualizados["produtos_cadastrados.$.precoEmCentavos"] = produtoUpdateDump[
+            "precoEmCentavos"
+        ]
+ 
+    if not camposAtualizados:
+        return
+ 
+    try:
+        resultado = db.vendedores.update_one(
+            {"_id": ObjectId(vendedor.id), "produtos_cadastrados.id_produto": produtoId},
+            {"$set": camposAtualizados},
+            session=session,
+        )
+    except Exception:
+        raise ErroException("Erro ao atualizar produto cadastrado do vendedor")
+ 
+    if resultado.matched_count == 0:
+        raise ErroException("Vendedor não encontrado")
+
+
+def removerProdutoCadastrado(vendedor: Vendedor , produtoId: str, session):
+    try:
+        resultado = db.vendedores.update_one(
+            {"_id": ObjectId(vendedor.id)},
+            {
+                "$pull": {
+                    "produtos_cadastrados": {
+                        "id_produto": produtoId
+                    }
+                }
+            },
+            session=session
+        )
+    except Exception:
+        raise ErroException("Erro ao remover produto do vendedor")
+
+    if resultado.matched_count == 0:
+        raise ErroException("Vendedor não encontrado")
+
