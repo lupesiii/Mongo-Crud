@@ -1,6 +1,7 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from cli import exibirErro, getUsuario, getLogin, getUsuarioUpdate
+from db.transactions import deletarUsuarioTransaction
 from db.usuario import buscarTodosUsuarios, buscarUsuario, cadastrarUsuario, deletarUsuario, loginUsuario, updateUsuario
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from lib.rich import console
@@ -60,7 +61,7 @@ def menuUsuario():
         email, senha = getLogin()
         try:    
             loginUsuario(email, senha)
-            deletarUsuario(email)
+            deletarUsuarioTransaction(email)
         except ErroException as e:
             exibirErro(e.mensagem)
       case 6:
