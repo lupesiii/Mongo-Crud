@@ -57,8 +57,9 @@ def menuUsuario():
         except ErroException as e:
           exibirErro(e.mensagem)
       case 5:
-        email = inquirer.text(message="Digite o email do usuário: ", validate=verificarEmail).execute()
+        email, senha = getLogin()
         try:    
+            loginUsuario(email, senha)
             deletarUsuario(email)
         except ErroException as e:
             exibirErro(e.mensagem)

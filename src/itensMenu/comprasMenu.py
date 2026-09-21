@@ -5,6 +5,7 @@ from cli import (
     exibirErro,
     getCompra,
     getCompraUpdate,
+    getLogin,
     selecionarEnderecoEntrega,
     selecionarProduto,
 )
@@ -46,13 +47,7 @@ def menuCompras():
 
         match opcao:
             case 1:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
-
+                email, senha = getLogin()
                 try:
                     usuarioId = loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
@@ -92,12 +87,7 @@ def menuCompras():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
+                email, senha = getLogin()
                 compraId = inquirer.text(
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()
@@ -106,17 +96,16 @@ def menuCompras():
                     loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
                     compra = buscarCompra(compraId, False)
+
+                    if usuario.id != compra.usuarioId:
+                        raise ErroException("Você não tem permissão para atualizar essa compra")
+
                     compraUpdate = getCompraUpdate(compra, usuario.enderecos)
                     atualizarCompra(compraUpdate, compraId)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 6:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
+                email, senha = getLogin()
                 compraId = inquirer.text(
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()

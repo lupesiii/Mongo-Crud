@@ -1,7 +1,9 @@
+from db.usuario import deletarUsuario
 from models.Vendedor import Vendedor
 from models.Produto import Produto, ProdutoUpdate
 from lib.mongoConnection import db
 from db.vendedor import (
+    deletarVendedor,
     removerProdutoCadastrado,
     cadastrarProdutoCadastrado,
     atualizarProdutoCadastrado,
@@ -14,6 +16,23 @@ from rich.panel import Panel
 from pydantic import ValidationError
 from models.Compra import Compra
 from bson import ObjectId
+
+def deletarUsuarioTransaction(email: str):
+    with db.client.start_session() as session:
+        try:
+            with session.start_transaction():
+                deletarUsuario(email, session)
+                deletarVendedor(email, session)
+        except Exception as e:
+            raise ErroException("Erro ao deletar usuário")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Usuário deletado com sucesso![/bold green]",
+            title="Delete",
+            border_style="green",
+        )
+    )
 
 
 def cadastrarProdutoTransaction(vendedor: Vendedor, produto: Produto):
@@ -30,7 +49,6 @@ def cadastrarProdutoTransaction(vendedor: Vendedor, produto: Produto):
                 cadastrarProdutoCadastrado(vendedor, produto, session)
 
         except Exception as e:
-            print(e)
             raise ErroException("Erro ao cadastrar produto") 
 
     console.print(
@@ -85,7 +103,6 @@ def atualizarProdutoTransaction(vendedor: Vendedor, produtoId: str, produtoUpdat
         except ErroException:
             raise
         except Exception as e:
-            print(e)
             raise ErroException("Erro ao atualizar produto")
  
     console.print(

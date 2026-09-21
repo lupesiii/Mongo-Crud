@@ -1,12 +1,12 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from db.produto import cadastrarProduto, buscarProdutos, buscarTodosProdutos, buscarProdutoPorId
-from db.transactions import deletarProdutoTransaction, cadastrarProdutoTransaction
+from db.transactions import atualizarProdutoTransaction, deletarProdutoTransaction, cadastrarProdutoTransaction
 from db.usuario import loginUsuario
 from db.vendedor import buscarVendedor, removerProdutoCadastrado
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro, getProduto, printarProdutosCadastrados
+from cli import exibirErro, getLogin, getProduto, getProdutoUpdate, printarProdutosCadastrados
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
 from models.Vendedor import Vendedor, VendedorProduto
@@ -35,13 +35,7 @@ def menuProduto():
 
         match opcao:
             case 1:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
-
+                email, senha = getLogin()
                 try:
                     loginUsuario(email, senha)
                     vendedor = buscarVendedor(email, False)
@@ -66,12 +60,7 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
+                email, senha = getLogin()
  
                 try:
                     loginUsuario(email, senha)
@@ -83,12 +72,7 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
-                email = inquirer.text(
-                    message="Digite o email do usuário: ", validate=verificarEmail
-                ).execute()
-                senha = inquirer.text(
-                    message="Digite a senha do usuário: ", validate=verificarVazio
-                ).execute()
+                email, senha = getLogin()
 
                 try:
                     loginUsuario(email, senha)

@@ -168,7 +168,7 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
     )
 
 
-def deletarUsuario(email):
+def deletarUsuario(email, session):
     email = email.strip()
 
     if not email:
@@ -179,7 +179,7 @@ def deletarUsuario(email):
         raise ErroException("Usuário não existente")
 
     try:
-        db.usuarios.delete_one({"email": email})
+        db.usuarios.delete_one({"email": email}, session=session)
     except BaseException:
         raise ErroException("Usuário não foi deletado")
 

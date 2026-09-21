@@ -71,3 +71,11 @@ def transformarEmCentavos(valor):
         valor = "".join(partes)
 
     return int(valor)
+
+
+def transformarEmReais(valor):
+    valor = transformarEmCentavos(valor)
+
+    reais = valor[:-2]
+    centavos = valor[-2:]
+    return f"R$: {reais},{centavos}"

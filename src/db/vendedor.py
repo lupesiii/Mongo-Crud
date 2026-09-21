@@ -136,18 +136,18 @@ def atualizarVendedor(vendedorId: str, nomeLoja: str):
     )
 
 
-def deletarVendedor(email: str):
+def deletarVendedor(email: str, session):
     vendedor = buscarVendedor(email, False)
 
-    print(vendedor)
     try:
-        resultado = db.vendedores.delete_one({"_id": ObjectId(vendedor.id)})
+        resultado = db.vendedores.delete_one({"_id": ObjectId(vendedor.id)}, session=session)
 
-        if resultado.deleted_count == 0:
-            raise ErroException("Vendedor não encontrado")
     except BaseException:
         raise ErroException("Vendedor não foi deletado")
 
+    if resultado.deleted_count == 0:
+        raise ErroException("Vendedor não encontrado")
+    
     console.print(
         Panel(
             f"[bold green]✓ Vendedor deletado com sucesso![/bold green]",

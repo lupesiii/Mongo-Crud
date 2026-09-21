@@ -8,6 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 from lib.inquirrerPy import (
     transformarEmCentavos,
+    transformarEmReais,
     verificarCpf,
     verificarDecimal,
     verificarEmail,
@@ -20,7 +21,7 @@ from models.Produto import Produto, ProdutoUpdate
 from models.Usuario import Usuario, UsuarioUpdate
 from models.Vendedor import VendedorProduto, ProdutosCadastrados
 from models.Favorito import Favorito
-from models.Compra import Compra
+from models.Compra import Compra, CompraUpdate
 from bson import ObjectId
 from models.ErroException import ErroException
 
@@ -193,10 +194,10 @@ def getUsuario():
 
     cpf_validado = Cpf(cpf=limparCpf(cpf))
     return Usuario(
-        nome=nome,
-        sobrenome=sobrenome,
-        email=email,
-        senha=senha,
+        nome=nome.strip(),
+        sobrenome=sobrenome.strip(),
+        email=email.strip(),
+        senha=senha.strip(),
         cpf=cpf_validado.cpf,
         favoritos=[],
         enderecos=enderecos,
@@ -211,8 +212,9 @@ def getProduto(vendedorProduto: VendedorProduto):
         message="Digite a descrição do produto: ", validate=verificarVazio
     ).execute()
     precoEmCentavos = inquirer.text(
-        message="Digite o preco do produto: ",
+        message="Digite o preco do produto em centavos: ",
         validate=verificarDecimal,
+        transformer=transformarEmReais
     ).execute()
     estoque = inquirer.text(
         message="Digite a quantidade do estoque: ", validate=verificarInteiro
@@ -223,11 +225,11 @@ def getProduto(vendedorProduto: VendedorProduto):
 
     return Produto(
         id=ObjectId(),
-        nome=nome,
-        descricao=descricao,
+        nome=nome.strip(),
+        descricao=descricao.strip(),
         precoEmCentavos=transformarEmCentavos(precoEmCentavos),
-        estoque=estoque,
-        imagem=imagem,
+        estoque=estoque.strip(),
+        imagem=imagem.strip(),
         vendedor=vendedorProduto,
     )
 
@@ -246,10 +248,10 @@ def getEnderecos():
             novoEndereco = Endereco.model_validate(
                 {
                     "id": str(ObjectId()),
-                    "rua": rua,
-                    "numero": numero,
-                    "bairro": bairro,
-                    "cidade": cidade,
+                    "rua": rua.strip(),
+                    "numero": numero.strip(),
+                    "bairro": bairro.strip(),
+                    "cidade": cidade.strip(),
                     "default": default,
                 }
             )
@@ -295,7 +297,7 @@ def getUsuarioUpdate(usuario: Usuario):
         raise ErroException("Coleta de dados cancelada pelo usuário")
 
     dadosPreenchidos = {
-        chave: valor for chave, valor in dados.items() if valor
+        chave: valor.trim() for chave, valor in dados.items() if valor
     }
 
     try:
@@ -314,7 +316,7 @@ def getVendedorUpdate(nomeLoja: str):
     if not nomeLoja:
         raise ErroException("Coleta de dados cancelada pelo usuário")
 
-    return nomeLoja
+    return nomeLoja.trim()
 
 
 def getProdutoUpdate(produto: Produto):
@@ -345,7 +347,7 @@ def getProdutoUpdate(produto: Produto):
         raise ErroException("Preço ou estoque informado em formato inválido")
  
     dadosPreenchidos = {
-        chave: valor for chave, valor in dados.items() if valor is not None
+        chave: valor.trim() for chave, valor in dados.items() if valor is not None
     }
  
     if not dadosPreenchidos:
@@ -466,15 +468,14 @@ def getCompraUpdate(compra: Compra, enderecos: list[Endereco]):
     print("Dados em branco serão considerados sem alteração")
  
     alterarEndereco = inquirer.confirm(
-        message="Deseja alterar o endereço de entrega?", default=False
-    ).execute()
+        message="Deseja alterar o endereço de entrega?" ).execute()
  
     novoEnderecoId = None
     if alterarEndereco:
         novoEnderecoId = selecionarEnderecoEntrega(enderecos)
  
     novaData = inquirer.text(
-        message=f"Nova data da compra dd-mm-aaaa ({compra.dataCompra}), "
+        message=f"Nova data da compra mm-dd-aaaa ({compra.dataCompra}), "
         "deixe em branco para não alterar: "
     ).execute()
  
@@ -508,10 +509,19 @@ def printarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]):
 
 
 def getLogin():
+    console.print(
+        Panel(
+            "[bold cyan]🔑 Login[/bold cyan]",
+            border_style="blue",
+            padding=(0, 1),
+            expand=False,
+        )
+    )
+
     email = inquirer.text(
         message="Digite o email do usuário: ", validate=verificarEmail
     ).execute()
-    senha = inquirer.text(
+    senha = inquirer.secret(
         message="Digite a senha do usuário: ", validate=verificarVazio
     ).execute()
 

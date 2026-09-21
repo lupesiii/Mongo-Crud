@@ -92,11 +92,6 @@ def buscarTodasCompras():
 
 
 def atualizarCompra(compraUpdate: CompraUpdate, compraId: str):
-    try:
-        compraUpdate = CompraUpdate.model_validate(compraUpdate)
-    except ValidationError:
-        raise ErroException("Formato de compra não suportado")
-
     compraUpdateDump = compraUpdate.model_dump(
         by_alias=True, exclude_unset=True, exclude_none=True
     )
