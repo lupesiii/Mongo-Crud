@@ -36,12 +36,11 @@ def menuCompras():
             message="Escolha a ação desejada: ",
             choices=[
                 Choice(1, name="Cadastrar Compra"),
-                Choice(2, name="Buscar compra por id"),
-                Choice(3, name="Buscar compras de um usuário"),
-                Choice(4, name="Buscar todas as compras"),
-                Choice(5, name="Atualizar compra"),
-                Choice(6, name="Remover compra"),
-                Choice(7, name="Voltar"),
+                Choice(2, name="Buscar compras de um usuário"),
+                Choice(3, name="Buscar todas as compras"),
+                Choice(4, name="Atualizar compra"),
+                Choice(5, name="Remover compra"),
+                Choice(6, name="Voltar"),
             ],
         ).execute()
 
@@ -60,19 +59,13 @@ def menuCompras():
 
                     enderecoEntregaId = selecionarEnderecoEntrega(usuario.enderecos)
 
-                    compra = getCompra(usuarioId, usuario.nome, produto, enderecoEntregaId)
+                    compra = getCompra(
+                        usuarioId, usuario.nome, produto, enderecoEntregaId
+                    )
                     cadastrarCompraTransaction(compra)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
-                compraId = inquirer.text(
-                    message="Digite o id da compra: ", validate=verificarVazio
-                ).execute()
-                try:
-                    buscarCompra(compraId)
-                except ErroException as e:
-                    exibirErro(e.mensagem)
-            case 3:
                 email = inquirer.text(
                     message="Digite o email do usuário: ", validate=verificarEmail
                 ).execute()
@@ -81,9 +74,29 @@ def menuCompras():
                     buscarComprasPorUsuario(usuarioId)
                 except ErroException as e:
                     exibirErro(e.mensagem)
-            case 4:
+            case 3:
                 try:
                     buscarTodasCompras()
+                except ErroException as e:
+                    exibirErro(e.mensagem)
+            case 4:
+                email, senha = getLogin()
+                compraId = inquirer.text(
+                    message="Digite o id da compra: ", validate=verificarVazio
+                ).execute()
+
+                try:
+                    usuarioId = loginUsuario(email, senha)
+                    usuario = buscarUsuario(email, False)
+                    compra = buscarCompra(compraId, False)
+
+                    if usuarioId != compra.usuarioId:
+                        raise ErroException(
+                            "Você não tem permissão para atualizar essa compra"
+                        )
+
+                    compraUpdate = getCompraUpdate(compra, usuario.enderecos)
+                    atualizarCompra(compraUpdate, compraId)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
@@ -93,29 +106,17 @@ def menuCompras():
                 ).execute()
 
                 try:
-                    loginUsuario(email, senha)
-                    usuario = buscarUsuario(email, False)
-                    compra = buscarCompra(compraId, False)
+                    usuarioId = loginUsuario(email, senha)
 
-                    if usuario.id != compra.usuarioId:
-                        raise ErroException("Você não tem permissão para atualizar essa compra")
+                    if usuarioId != compra.usuarioId:
+                        raise ErroException(
+                            "Você não tem permissão para atualizar essa compra"
+                        )
 
-                    compraUpdate = getCompraUpdate(compra, usuario.enderecos)
-                    atualizarCompra(compraUpdate, compraId)
-                except ErroException as e:
-                    exibirErro(e.mensagem)
-            case 6:
-                email, senha = getLogin()
-                compraId = inquirer.text(
-                    message="Digite o id da compra: ", validate=verificarVazio
-                ).execute()
-
-                try:
-                    loginUsuario(email, senha)
                     deletarCompraTransaction(compraId)
                 except ErroException as e:
                     exibirErro(e.mensagem)
-            case 7:
+            case 6:
                 console.clear()
                 break
             case _:

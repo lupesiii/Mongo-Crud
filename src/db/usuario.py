@@ -49,27 +49,27 @@ def buscarUsuario(email: str, allow_Print=True):
     except BaseException as e:
         print(e)
         raise ErroException("Erro ao converter usuário")
-    
+
     if allow_Print:
         printarUsuario(user)
-    
+
     return user
 
 
 def buscarUsuarioId(email: str):
     email = email.strip()
- 
+
     if not email:
         raise ErroException("Valor nulo não é permitido")
- 
+
     try:
         user = db.usuarios.find_one({"email": email})
     except BaseException:
         raise ErroException("Erro ao recuperar usuário")
- 
+
     if not user:
         raise ErroException("Usuário não encontrado")
- 
+
     return str(user.get("_id"))
 
 
@@ -131,7 +131,9 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
     except ValidationError:
         raise ErroException("Formato de usuário não suportado")
 
-    usuarioUpdateDump = usuarioUpdate.model_dump(exclude={"favoritos", "enderecos"}, exclude_unset=True, exclude_none=True)
+    usuarioUpdateDump = usuarioUpdate.model_dump(
+        exclude={"favoritos", "enderecos"}, exclude_unset=True, exclude_none=True
+    )
 
     favoritosIds = []
     if usuario.favoritos:
@@ -151,9 +153,9 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
                 "$set": usuarioUpdateDump,
                 "$pull": {
                     "favoritos": {"id_produto": {"$in": favoritosIds}},
-                    "enderecos": {"id": {"$in": enderecosIds}}
-                }
-            }
+                    "enderecos": {"id": {"$in": enderecosIds}},
+                },
+            },
         )
     except Exception as e:
         print(e)
@@ -183,14 +185,6 @@ def deletarUsuario(email, session):
     except BaseException:
         raise ErroException("Usuário não foi deletado")
 
-    console.print(
-        Panel(
-            f"[bold green]✓ Usuário deletado com sucesso![/bold green]",
-            title="Delete",
-            border_style="green",
-        )
-    )
-
 
 def loginUsuario(email: str, senha: str):
     email = email.strip()
@@ -208,4 +202,3 @@ def loginUsuario(email: str, senha: str):
         raise ErroException("Email ou senha inválido")
 
     return str(usuario.get("_id"))
-

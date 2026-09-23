@@ -25,8 +25,35 @@ def verificarCpf(cpf):
     return True
 
 
+def verificarCpfOpcional(cpf):
+    if not cpf.strip():
+        return True
+
+    try:
+        CPF = Cpf(cpf=cpf)
+    except PydanticValidationError:
+        raise ValidationError(message="Este CPF não está válido!")
+
+    is_valid = CPF.verificar()
+    if not is_valid:
+        raise ValidationError(message="Este CPF não está válido!")
+
+    return True
+
+
 def verificarEmail(email):
     verificarVazio(email)
+
+    try:
+        Email(email=email)
+    except PydanticValidationError:
+        raise ValidationError(message="Este Email não está válido!")
+    return True
+
+
+def verificarEmailOpcional(email):
+    if not email.strip():
+        return True
 
     try:
         Email(email=email)

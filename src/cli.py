@@ -14,6 +14,8 @@ from lib.inquirrerPy import (
     verificarEmail,
     verificarInteiro,
     verificarVazio,
+    verificarCpfOpcional,
+    verificarEmailOpcional,
 )
 from models.Cpf import Cpf, limparCpf
 from models.Endereco import Endereco
@@ -149,19 +151,19 @@ def printarCompra(compra: Compra):
         border_style="cyan",
         show_lines=True,
     )
- 
+
     tabela.add_column("Produto", style="bold white", justify="left")
     tabela.add_column("Preço", style="green", justify="right")
     tabela.add_column("Data da compra", style="white", justify="center")
     tabela.add_column("Loja", style="white", justify="center")
- 
+
     tabela.add_row(
         compra.nomeProduto,
         f"R$ {int(compra.precoEmCentavos) / 100:.2f}",
         compra.dataCompra,
         compra.nomeLoja,
     )
- 
+
     console.print(
         Panel(
             tabela,
@@ -171,7 +173,7 @@ def printarCompra(compra: Compra):
             padding=(1, 1),
             expand=False,
         )
-    )    
+    )
 
 
 def getUsuario():
@@ -214,7 +216,7 @@ def getProduto(vendedorProduto: VendedorProduto):
     precoEmCentavos = inquirer.text(
         message="Digite o preco do produto em centavos: ",
         validate=verificarDecimal,
-        transformer=transformarEmReais
+        transformer=transformarEmReais,
     ).execute()
     estoque = inquirer.text(
         message="Digite a quantidade do estoque: ", validate=verificarInteiro
@@ -276,11 +278,17 @@ def getUsuarioUpdate(usuario: Usuario):
     print("Dados em branco serão considerados sem alteração")
     nome = inquirer.text(message=f"Nome ({usuario.nome}): ").execute()
     sobrenome = inquirer.text(message=f"Sobrenome ({usuario.sobrenome}): ").execute()
-    email = inquirer.text(message=f"Email ({usuario.email}): ").execute()
-    senha = inquirer.secret(message="Nova senha (deixe em branco para não alterar): ").execute()
-    cpf = inquirer.text(message=f"CPF ({usuario.cpf}): ").execute()
+    email = inquirer.text(
+        message=f"Email ({usuario.email}): ", validate=verificarEmailOpcional
+    ).execute()
+    senha = inquirer.secret(
+        message="Nova senha (deixe em branco para não alterar): "
+    ).execute()
+    cpf = inquirer.text(
+        message=f"CPF ({usuario.cpf}): ", validate=verificarCpfOpcional
+    ).execute()
     favoritosParaRemover = selecionarFavoritos(usuario.favoritos)
-    enderecosParaRemover = selecionarEnderecos(usuario.enderecos)    
+    enderecosParaRemover = selecionarEnderecos(usuario.enderecos)
 
     dados = {
         "nome": nome,
@@ -289,15 +297,16 @@ def getUsuarioUpdate(usuario: Usuario):
         "senha": senha,
         "cpf": cpf,
         "favoritos": favoritosParaRemover,
-        "enderecos": enderecosParaRemover
-
+        "enderecos": enderecosParaRemover,
     }
 
     if dados is None:
         raise ErroException("Coleta de dados cancelada pelo usuário")
 
     dadosPreenchidos = {
-        chave: valor.strip() if type(valor) is str else valor for chave, valor in dados.items() if valor
+        chave: valor.strip() if type(valor) is str else valor
+        for chave, valor in dados.items()
+        if valor
     }
 
     try:
@@ -321,18 +330,18 @@ def getVendedorUpdate(nomeLoja: str):
 
 def getProdutoUpdate(produto: Produto):
     print("Dados em branco serão considerados sem alteração")
- 
+
     nome = inquirer.text(message=f"Nome ({produto.nome}): ").execute()
     descricao = inquirer.text(message=f"Descrição ({produto.descricao}): ").execute()
     precoEmCentavos = inquirer.text(
         message=f"Preço (R$ {int(produto.precoEmCentavos) / 100:.2f}), "
-        "deixe em branco para não alterar: "
+        "deixe em branco para não alterar: ",
     ).execute()
     estoque = inquirer.text(
         message=f"Estoque ({produto.estoque}), deixe em branco para não alterar: "
     ).execute()
     imagem = inquirer.text(message=f"Imagem ({produto.imagem}): ").execute()
- 
+
     try:
         dados = {
             "nome": nome,
@@ -345,20 +354,22 @@ def getProdutoUpdate(produto: Produto):
         }
     except Exception:
         raise ErroException("Preço ou estoque informado em formato inválido")
- 
+
     dadosPreenchidos = {
-        chave: valor.strip() if type(valor) is str else valor for chave, valor in dados.items() if valor is not None
+        chave: valor.strip() if type(valor) is str else valor
+        for chave, valor in dados.items()
+        if valor is not None
     }
- 
+
     if not dadosPreenchidos:
         raise ErroException("Nenhum campo para atualizar foi informado")
- 
+
     try:
         produtoUpdate = ProdutoUpdate.model_validate(dadosPreenchidos)
     except Exception as e:
         print(e)
         raise ErroException("Erro ao transformar os dados")
- 
+
     return produtoUpdate
 
 
@@ -366,10 +377,7 @@ def selecionarFavoritos(favoritos: list[Favorito]):
     if len(favoritos) == 0:
         return []
 
-    opcoes = [
-        Choice(value=fav.produtoId, name=fav.nome)
-        for fav in favoritos
-    ]
+    opcoes = [Choice(value=fav.produtoId, name=fav.nome) for fav in favoritos]
 
     favoritosSelecionados = inquirer.checkbox(
         message="Selecione os favoritos que deseja remover (Tab):",
@@ -400,10 +408,7 @@ def selecionarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]
     if len(produtosCadastrados) == 0:
         return []
 
-    opcoes = [
-        Choice(value=pod.produtoId, name=pod.nome)
-        for pod in produtosCadastrados
-    ]
+    opcoes = [Choice(value=pod.produtoId, name=pod.nome) for pod in produtosCadastrados]
 
     produtosCadastradosSelecionados = inquirer.checkbox(
         message="Selecione os enderecos que deseja remover (Tab):",
@@ -411,6 +416,7 @@ def selecionarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]
     ).execute()
 
     return produtosCadastradosSelecionados
+
 
 def selecionarProduto(produtos: list[Produto]):
     produto = inquirer.select(
@@ -424,34 +430,38 @@ def selecionarProduto(produtos: list[Produto]):
             for p in produtos
         ],
     ).execute()
- 
+
     return produto
 
 
 def selecionarEnderecoEntrega(enderecos: list[Endereco]):
     if len(enderecos) == 0:
         raise ErroException("Usuário não possui endereços cadastrados")
- 
+
     opcoes = [
         Choice(
             value=end.id,
-            name="".join([end.rua, " ", end.numero, ", ", end.bairro, " - ", end.cidade])
+            name="".join(
+                [end.rua, " ", end.numero, ", ", end.bairro, " - ", end.cidade]
+            )
             + (" (padrão)" if end.default else ""),
         )
         for end in enderecos
     ]
- 
+
     enderecoId = inquirer.select(
         message="Selecione o endereço de entrega: ",
         choices=opcoes,
     ).execute()
- 
+
     return enderecoId
- 
- 
-def getCompra(usuarioId: str, nomeUsuario: str, produto: Produto, enderecoEntregaId: str):
+
+
+def getCompra(
+    usuarioId: str, nomeUsuario: str, produto: Produto, enderecoEntregaId: str
+):
     dataCompra = datetime.now().strftime("%d-%m-%Y")
- 
+
     return Compra(
         produtoId=produto.id,
         usuarioId=usuarioId,
@@ -462,39 +472,41 @@ def getCompra(usuarioId: str, nomeUsuario: str, produto: Produto, enderecoEntreg
         nomeUsuario=nomeUsuario,
         nomeLoja=produto.vendedor.nome_loja,
     )
- 
- 
+
+
 def getCompraUpdate(compra: Compra, enderecos: list[Endereco]):
     print("Dados em branco serão considerados sem alteração")
- 
+
     alterarEndereco = inquirer.confirm(
-        message="Deseja alterar o endereço de entrega?" ).execute()
- 
+        message="Deseja alterar o endereço de entrega?"
+    ).execute()
+
     novoEnderecoId = None
     if alterarEndereco:
         novoEnderecoId = selecionarEnderecoEntrega(enderecos)
- 
+
     novaData = inquirer.text(
         message=f"Nova data da compra mm-dd-aaaa ({compra.dataCompra}), "
         "deixe em branco para não alterar: "
     ).execute()
- 
+
     dados = {
         "id_endereco_entrega": novoEnderecoId,
         "data_compra": novaData if novaData else None,
     }
- 
+
     dadosPreenchidos = {chave: valor for chave, valor in dados.items() if valor}
- 
+
     if not dadosPreenchidos:
         raise ErroException("Nenhum campo para atualizar foi informado")
- 
+
     try:
         compraUpdate = CompraUpdate.model_validate(dadosPreenchidos)
     except Exception:
         raise ErroException("Erro ao transformar os dados")
- 
+
     return compraUpdate
+
 
 def printarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]):
     if len(produtosCadastrados) == 0:
@@ -502,7 +514,10 @@ def printarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]):
 
     produtoId = inquirer.select(
         message="Escolha o produto que desejada remover: ",
-        choices=[Choice(produto.produtoId, name=produto.nome) for produto in produtosCadastrados]
+        choices=[
+            Choice(produto.produtoId, name=produto.nome)
+            for produto in produtosCadastrados
+        ],
     ).execute()
 
     return produtoId

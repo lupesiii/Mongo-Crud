@@ -116,10 +116,7 @@ def atualizarVendedor(vendedorId: str, nomeLoja: str):
     try:
         resultado = db.vendedores.update_one(
             {"_id": ObjectId(vendedorId)},
-            {"$set": {
-                "nome_loja": nomeLoja
-                }
-            },
+            {"$set": {"nome_loja": nomeLoja}},
         )
     except Exception as e:
         raise ErroException(e)
@@ -140,14 +137,16 @@ def deletarVendedor(email: str, session):
     vendedor = buscarVendedor(email, False)
 
     try:
-        resultado = db.vendedores.delete_one({"_id": ObjectId(vendedor.id)}, session=session)
+        resultado = db.vendedores.delete_one(
+            {"_id": ObjectId(vendedor.id)}, session=session if session else None
+        )
 
     except BaseException:
         raise ErroException("Vendedor não foi deletado")
 
     if resultado.deleted_count == 0:
         raise ErroException("Vendedor não encontrado")
-    
+
     console.print(
         Panel(
             f"[bold green]✓ Vendedor deletado com sucesso![/bold green]",
@@ -157,19 +156,20 @@ def deletarVendedor(email: str, session):
     )
 
 
-def cadastrarProdutoCadastrado(vendedor: Vendedor , produto: Produto, session):
+def cadastrarProdutoCadastrado(vendedor: Vendedor, produto: Produto, session):
     try:
         resultado = db.vendedores.update_one(
             {"_id": ObjectId(vendedor.id)},
-            {"$push": {
-                "produtos_cadastrados": {
-                    "id_produto": produto.id,
-                    "nome": produto.nome,
-                    "precoEmCentavos": produto.precoEmCentavos,
+            {
+                "$push": {
+                    "produtos_cadastrados": {
+                        "id_produto": produto.id,
+                        "nome": produto.nome,
+                        "precoEmCentavos": produto.precoEmCentavos,
                     }
                 }
             },
-            session=session
+            session=session,
         )
     except Exception as e:
         raise ErroException(e)
@@ -178,48 +178,46 @@ def cadastrarProdutoCadastrado(vendedor: Vendedor , produto: Produto, session):
         raise ErroException("Vendedor não encontrado")
 
 
-def atualizarProdutoCadastrado(vendedor: Vendedor, produtoId: str, produtoUpdateDump: dict, session):
+def atualizarProdutoCadastrado(
+    vendedor: Vendedor, produtoId: str, produtoUpdateDump: dict, session
+):
     camposAtualizados = {}
- 
+
     if "nome" in produtoUpdateDump:
         camposAtualizados["produtos_cadastrados.$.nome"] = produtoUpdateDump["nome"]
     if "precoEmCentavos" in produtoUpdateDump:
         camposAtualizados["produtos_cadastrados.$.precoEmCentavos"] = produtoUpdateDump[
             "precoEmCentavos"
         ]
- 
+
     if not camposAtualizados:
         return
- 
+
     try:
         resultado = db.vendedores.update_one(
-            {"_id": ObjectId(vendedor.id), "produtos_cadastrados.id_produto": produtoId},
+            {
+                "_id": ObjectId(vendedor.id),
+                "produtos_cadastrados.id_produto": produtoId,
+            },
             {"$set": camposAtualizados},
             session=session,
         )
     except Exception:
         raise ErroException("Erro ao atualizar produto cadastrado do vendedor")
- 
+
     if resultado.matched_count == 0:
         raise ErroException("Vendedor não encontrado")
 
 
-def removerProdutoCadastrado(vendedor: Vendedor , produtoId: str, session):
+def removerProdutoCadastrado(vendedor: Vendedor, produtoId: str, session):
     try:
         resultado = db.vendedores.update_one(
             {"_id": ObjectId(vendedor.id)},
-            {
-                "$pull": {
-                    "produtos_cadastrados": {
-                        "id_produto": produtoId
-                    }
-                }
-            },
-            session=session
+            {"$pull": {"produtos_cadastrados": {"id_produto": produtoId}}},
+            session=session,
         )
     except Exception:
         raise ErroException("Erro ao remover produto do vendedor")
 
     if resultado.matched_count == 0:
         raise ErroException("Vendedor não encontrado")
-

@@ -6,7 +6,7 @@ from db.vendedor import (
     buscarVendedor,
     cadastrarVendedor,
     deletarVendedor,
-    atualizarVendedor
+    atualizarVendedor,
 )
 from lib.rich import console
 from rich.panel import Panel
@@ -82,7 +82,7 @@ def menuVendedor():
                 email, senha = getLogin()
                 try:
                     loginUsuario(email, senha)
-                    deletarVendedor(email)
+                    deletarVendedor(email, None)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 6:
