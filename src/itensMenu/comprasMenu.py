@@ -32,7 +32,7 @@ def menuCompras():
             )
         )
 
-        opcao = inquirer.select(
+        opcao = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
             message="Escolha a ação desejada: ",
             choices=[
                 Choice(1, name="Cadastrar Compra"),
@@ -51,9 +51,12 @@ def menuCompras():
                     usuarioId = loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
 
-                    nomeProduto = inquirer.text(
-                        message="Que produto deseja comprar: ", validate=verificarVazio
-                    ).execute()
+                    nomeProduto = (
+                        inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+                            message="Que produto deseja comprar: ",
+                            validate=verificarVazio,
+                        ).execute()
+                    )
                     produtos = buscarProdutosParaCompra(nomeProduto)
                     produto = selecionarProduto(produtos)
 
@@ -66,7 +69,7 @@ def menuCompras():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
-                email = inquirer.text(
+                email = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o email do usuário: ", validate=verificarEmail
                 ).execute()
                 try:
@@ -81,7 +84,7 @@ def menuCompras():
                     exibirErro(e.mensagem)
             case 4:
                 email, senha = getLogin()
-                compraId = inquirer.text(
+                compraId = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()
 
@@ -101,12 +104,13 @@ def menuCompras():
                     exibirErro(e.mensagem)
             case 5:
                 email, senha = getLogin()
-                compraId = inquirer.text(
+                compraId = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()
 
                 try:
                     usuarioId = loginUsuario(email, senha)
+                    compra = buscarCompra(compraId, False)
 
                     if usuarioId != compra.usuarioId:
                         raise ErroException(

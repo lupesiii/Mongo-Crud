@@ -1,5 +1,7 @@
 from cli import printarUsuario
+from db.produto import existeRegistro
 from models.ErroException import ErroException
+from models.Produto import Produto
 from models.Usuario import Usuario, UsuarioUpdate
 from lib.mongoConnection import db
 from rich.panel import Panel
@@ -36,13 +38,7 @@ def buscarUsuario(email: str, allow_Print=True):
         raise ErroException("Erro ao recuperar usuário")
 
     if not user:
-        console.print(
-            Panel.fit(
-                "Nenhum usuário encontrado",
-                border_style="red",
-            )
-        )
-        return
+        raise ErroException("Usuário não encontrado")
 
     try:
         user = Usuario.model_validate(user)
@@ -184,6 +180,51 @@ def deletarUsuario(email, session):
         db.usuarios.delete_one({"email": email}, session=session)
     except BaseException:
         raise ErroException("Usuário não foi deletado")
+
+
+def adicionarFavotito(vetorProdutos: list[Produto], email: str):
+    email = email.strip()
+
+    if not email:
+        raise ErroException("Valor nulo é inválido")
+
+    existsUsuario = existeUsuario(email)
+    if not existsUsuario:
+        raise ErroException("Usuário não existe")
+
+    produtosId = []
+
+    for produto in vetorProdutos:
+        if produto.id:
+            existProduto = existeRegistro(
+                produto.id, db.produtos, {"_id": ObjectId(produto.id)}
+            )
+
+            if not existProduto:
+                raise ErroException("Produto não existe")
+
+            produtosId.append({"id_produto": produto.id})
+
+    try:
+        resultado = db.usuarios.update_one(
+            {"email": email},
+            {
+                "$addToSet": {
+                    "favoritos": {"$each": produtosId},
+                },
+            },
+        )
+    except Exception as e:
+        print(e)
+        raise ErroException("Erro ao adicionar favoritos ao usuário")
+
+    console.print(
+        Panel(
+            f"[bold green]✓ Produtos adicionados ao favoritos![/bold green]",
+            title="Update",
+            border_style="green",
+        )
+    )
 
 
 def loginUsuario(email: str, senha: str):

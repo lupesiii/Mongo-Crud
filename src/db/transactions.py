@@ -87,7 +87,7 @@ def deletarProdutoTransaction(vendedor: Vendedor, produtoId: str):
                 removerProdutoCadastrado(vendedor, produtoId, session)
 
         except Exception as e:
-            raise ErroException(e)
+            raise ErroException("Não foi possível deletar produto")
 
     console.print(
         Panel(

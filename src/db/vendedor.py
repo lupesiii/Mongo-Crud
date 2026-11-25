@@ -119,7 +119,7 @@ def atualizarVendedor(vendedorId: str, nomeLoja: str):
             {"$set": {"nome_loja": nomeLoja}},
         )
     except Exception as e:
-        raise ErroException(e)
+        raise ErroException("Não foi possível atualizar o vendedor")
 
     if resultado.matched_count == 0:
         raise ErroException("Vendedor não encontrado")
@@ -172,7 +172,7 @@ def cadastrarProdutoCadastrado(vendedor: Vendedor, produto: Produto, session):
             session=session,
         )
     except Exception as e:
-        raise ErroException(e)
+        raise ErroException("Não foi possível cadastrar produto")
 
     if resultado.matched_count == 0:
         raise ErroException("Vendedor não encontrado")

@@ -26,7 +26,7 @@ def menuVendedor():
             )
         )
 
-        opcao = inquirer.select(
+        opcao = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
             message="Escolha a ação desejada: ",
             choices=[
                 Choice(1, name="Cadastrar Vendedor"),
@@ -43,21 +43,23 @@ def menuVendedor():
                 email, senha = getLogin()
                 try:
                     usuarioId = loginUsuario(email, senha)
-                    nomeLoja = inquirer.text(
-                        message="Digite o nome da loja: ", validate=verificarVazio
-                    ).execute()
+                    nomeLoja = (
+                        inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+                            message="Digite o nome da loja: ", validate=verificarVazio
+                        ).execute()
+                    )
 
                     vendedor = Vendedor(
-                        nomeLoja=nomeLoja,
-                        usuarioId=usuarioId,
-                        produtosCadastrados=[],
+                        nome_loja=nomeLoja,
+                        usuario_id=usuarioId,
+                        produtos_cadastrados=[],
                         vendas=[],
                     )
                     cadastrarVendedor(vendedor)
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
-                email = inquirer.text(
+                email = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o email do vendedor: ", validate=verificarEmail
                 ).execute()
                 try:

@@ -18,7 +18,7 @@ def menuPrincipal():
             )
         )
 
-        opcao = inquirer.select(
+        opcao = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
             message="Escolha a coleção desejada: ",
             choices=[
                 Choice(1, name="Usuário"),

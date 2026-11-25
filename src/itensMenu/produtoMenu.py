@@ -1,12 +1,27 @@
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
-from db.produto import cadastrarProduto, buscarProdutos, buscarTodosProdutos, buscarProdutoPorId
-from db.transactions import atualizarProdutoTransaction, deletarProdutoTransaction, cadastrarProdutoTransaction
+from db.produto import (
+    cadastrarProduto,
+    buscarProdutos,
+    buscarTodosProdutos,
+    buscarProdutoPorId,
+)
+from db.transactions import (
+    atualizarProdutoTransaction,
+    deletarProdutoTransaction,
+    cadastrarProdutoTransaction,
+)
 from db.usuario import loginUsuario
 from db.vendedor import buscarVendedor, removerProdutoCadastrado
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro, getLogin, getProduto, getProdutoUpdate, printarProdutosCadastrados
+from cli import (
+    exibirErro,
+    getLogin,
+    getProduto,
+    getProdutoUpdate,
+    printarProdutosCadastrados,
+)
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
 from models.Vendedor import Vendedor, VendedorProduto
@@ -21,7 +36,7 @@ def menuProduto():
             )
         )
 
-        opcao = inquirer.select(
+        opcao = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
             message="Escolha a ação desejada: ",
             choices=[
                 Choice(1, name="Cadastrar Produto"),
@@ -47,7 +62,7 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 2:
-                nome = inquirer.text(
+                nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Que produto deseja encontrar:", validate=verificarVazio
                 ).execute()
                 try:
@@ -61,7 +76,7 @@ def menuProduto():
                     exibirErro(e.mensagem)
             case 4:
                 email, senha = getLogin()
- 
+
                 try:
                     loginUsuario(email, senha)
                     vendedor = buscarVendedor(email, False)

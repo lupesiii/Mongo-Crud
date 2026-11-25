@@ -2,6 +2,7 @@ from pydantic import BaseModel, model_validator
 
 def limparCpf(cpf):
   return ''.join(filter(str.isdigit, cpf))
+  
 class Cpf(BaseModel):
   cpf: str
   

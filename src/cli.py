@@ -29,12 +29,13 @@ from models.ErroException import ErroException
 
 
 def printarUsuario(usuario: Usuario):
+    tabelaFavoritos = Table(
+        title="[bold yellow]⭐ Favoritos[/bold yellow]",
+        border_style="cyan",
+        show_lines=True,
+    )
+
     if len(usuario.favoritos) > 0:
-        tabelaFavoritos = Table(
-            title="[bold yellow]⭐ Favoritos[/bold yellow]",
-            border_style="cyan",
-            show_lines=True,
-        )
         tabelaFavoritos.add_column("N°", justify="center", style="dim")
         tabelaFavoritos.add_column("Produto", style="bold white")
         tabelaFavoritos.add_column("Preço", justify="right", style="green")
@@ -46,13 +47,13 @@ def printarUsuario(usuario: Usuario):
                 f"R$ {int(fav.precoEmCentavos) / 100:.2f}",
             )
 
-    if len(usuario.enderecos) > 0:
-        tabelaEnderecos = Table(
-            title="[bold orange3]🛣️ Endereços[/bold orange3]",
-            border_style="cyan",
-            show_lines=True,
-        )
+    tabelaEnderecos = Table(
+        title="[bold orange3]🛣️ Endereços[/bold orange3]",
+        border_style="cyan",
+        show_lines=True,
+    )
 
+    if len(usuario.enderecos) > 0:
         tabelaEnderecos.add_column("Endereço", justify="center", style="bold white")
         tabelaEnderecos.add_column("Cidade", justify="center", style="white")
         tabelaEnderecos.add_column("Default", justify="center", style="dim")
@@ -78,14 +79,14 @@ def printarUsuario(usuario: Usuario):
     )
 
 
-def printarVendedor(nomeLoja: str, produtosCadastrados: ProdutosCadastrados):
-    if len(produtosCadastrados) > 0:
-        tabelaCadastrados = Table(
-            title="[bold yellow]🛒 Produtos[/bold yellow]",
-            border_style="cyan",
-            show_lines=True,
-        )
+def printarVendedor(nomeLoja: str, produtosCadastrados: list[ProdutosCadastrados]):
+    tabelaCadastrados = Table(
+        title="[bold yellow]🛒 Produtos[/bold yellow]",
+        border_style="cyan",
+        show_lines=True,
+    )
 
+    if len(produtosCadastrados) > 0:
         tabelaCadastrados.add_column("N°", justify="center", style="dim")
         tabelaCadastrados.add_column("Produto", style="bold white")
         tabelaCadastrados.add_column("Preço", justify="right", style="green")
@@ -177,19 +178,19 @@ def printarCompra(compra: Compra):
 
 
 def getUsuario():
-    nome = inquirer.text(
+    nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o nome do usuário: ", validate=verificarVazio
     ).execute()
-    sobrenome = inquirer.text(
+    sobrenome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o sobrenome do usuário: ", validate=verificarVazio
     ).execute()
-    email = inquirer.text(
+    email = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o email do usuário: ", validate=verificarEmail
     ).execute()
-    senha = inquirer.secret(
+    senha = inquirer.secret(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite a senha do usuário: ", validate=verificarVazio
     ).execute()
-    cpf = inquirer.text(
+    cpf = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o CPF do usuário: ", validate=verificarCpf
     ).execute()
     enderecos = getEnderecos()
@@ -207,26 +208,26 @@ def getUsuario():
 
 
 def getProduto(vendedorProduto: VendedorProduto):
-    nome = inquirer.text(
+    nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o nome do produto: ", validate=verificarVazio
     ).execute()
-    descricao = inquirer.text(
+    descricao = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite a descrição do produto: ", validate=verificarVazio
     ).execute()
-    precoEmCentavos = inquirer.text(
+    precoEmCentavos = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o preco do produto em centavos: ",
         validate=verificarDecimal,
         transformer=transformarEmReais,
     ).execute()
-    estoque = inquirer.text(
+    estoque = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite a quantidade do estoque: ", validate=verificarInteiro
     ).execute()
-    imagem = inquirer.text(
+    imagem = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite a url da imagem do produto: ", validate=verificarVazio
     ).execute()
 
     return Produto(
-        id=ObjectId(),
+        _id=str(ObjectId()),
         nome=nome.strip(),
         descricao=descricao.strip(),
         precoEmCentavos=transformarEmCentavos(precoEmCentavos),
@@ -240,11 +241,21 @@ def getEnderecos():
     enderecos: list[Endereco] = []
 
     while True:
-        rua = inquirer.text(message="Rua: ", validate=verificarVazio).execute()
-        numero = inquirer.text(message="Número: ", validate=verificarVazio).execute()
-        bairro = inquirer.text(message="Bairro: ", validate=verificarVazio).execute()
-        cidade = inquirer.text(message="Cidade: ", validate=verificarVazio).execute()
-        default = inquirer.confirm(message="Esse é o endereço padrão?").execute()
+        rua = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Rua: ", validate=verificarVazio
+        ).execute()
+        numero = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Número: ", validate=verificarVazio
+        ).execute()
+        bairro = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Bairro: ", validate=verificarVazio
+        ).execute()
+        cidade = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Cidade: ", validate=verificarVazio
+        ).execute()
+        default = inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
+            message="Esse é o endereço padrão?"
+        ).execute()
 
         try:
             novoEndereco = Endereco.model_validate(
@@ -268,7 +279,7 @@ def getEnderecos():
 
         enderecos.append(novoEndereco)
 
-        if not inquirer.confirm(
+        if not inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
             message="Deseja adicionar mais um endereço? "
         ).execute():
             return enderecos
@@ -276,15 +287,19 @@ def getEnderecos():
 
 def getUsuarioUpdate(usuario: Usuario):
     print("Dados em branco serão considerados sem alteração")
-    nome = inquirer.text(message=f"Nome ({usuario.nome}): ").execute()
-    sobrenome = inquirer.text(message=f"Sobrenome ({usuario.sobrenome}): ").execute()
-    email = inquirer.text(
+    nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Nome ({usuario.nome}): "
+    ).execute()
+    sobrenome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Sobrenome ({usuario.sobrenome}): "
+    ).execute()
+    email = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message=f"Email ({usuario.email}): ", validate=verificarEmailOpcional
     ).execute()
-    senha = inquirer.secret(
+    senha = inquirer.secret(  # pyright: ignore[reportPrivateImportUsage]
         message="Nova senha (deixe em branco para não alterar): "
     ).execute()
-    cpf = inquirer.text(
+    cpf = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message=f"CPF ({usuario.cpf}): ", validate=verificarCpfOpcional
     ).execute()
     favoritosParaRemover = selecionarFavoritos(usuario.favoritos)
@@ -320,7 +335,9 @@ def getUsuarioUpdate(usuario: Usuario):
 
 def getVendedorUpdate(nomeLoja: str):
     print("Dados em branco serão considerados sem alteração")
-    nomeLoja = inquirer.text(message=f"Nome da Loja ({nomeLoja}): ").execute()
+    nomeLoja = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Nome da Loja ({nomeLoja}): "
+    ).execute()
 
     if not nomeLoja:
         raise ErroException("Coleta de dados cancelada pelo usuário")
@@ -331,16 +348,22 @@ def getVendedorUpdate(nomeLoja: str):
 def getProdutoUpdate(produto: Produto):
     print("Dados em branco serão considerados sem alteração")
 
-    nome = inquirer.text(message=f"Nome ({produto.nome}): ").execute()
-    descricao = inquirer.text(message=f"Descrição ({produto.descricao}): ").execute()
-    precoEmCentavos = inquirer.text(
+    nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Nome ({produto.nome}): "
+    ).execute()
+    descricao = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Descrição ({produto.descricao}): "
+    ).execute()
+    precoEmCentavos = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message=f"Preço (R$ {int(produto.precoEmCentavos) / 100:.2f}), "
         "deixe em branco para não alterar: ",
     ).execute()
-    estoque = inquirer.text(
+    estoque = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message=f"Estoque ({produto.estoque}), deixe em branco para não alterar: "
     ).execute()
-    imagem = inquirer.text(message=f"Imagem ({produto.imagem}): ").execute()
+    imagem = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+        message=f"Imagem ({produto.imagem}): "
+    ).execute()
 
     try:
         dados = {
@@ -379,10 +402,12 @@ def selecionarFavoritos(favoritos: list[Favorito]):
 
     opcoes = [Choice(value=fav.produtoId, name=fav.nome) for fav in favoritos]
 
-    favoritosSelecionados = inquirer.checkbox(
-        message="Selecione os favoritos que deseja remover (Tab):",
-        choices=opcoes,
-    ).execute()
+    favoritosSelecionados = (
+        inquirer.checkbox(  # pyright: ignore[reportPrivateImportUsage]
+            message="Selecione os favoritos que deseja remover (Tab):",
+            choices=opcoes,
+        ).execute()
+    )
 
     return favoritosSelecionados
 
@@ -396,10 +421,12 @@ def selecionarEnderecos(enderecos: list[Endereco]):
         for end in enderecos
     ]
 
-    enderecosSelecionados = inquirer.checkbox(
-        message="Selecione os enderecos que deseja remover (Tab):",
-        choices=opcoes,
-    ).execute()
+    enderecosSelecionados = (
+        inquirer.checkbox(  # pyright: ignore[reportPrivateImportUsage]
+            message="Selecione os enderecos que deseja remover (Tab):",
+            choices=opcoes,
+        ).execute()
+    )
 
     return enderecosSelecionados
 
@@ -410,16 +437,18 @@ def selecionarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]
 
     opcoes = [Choice(value=pod.produtoId, name=pod.nome) for pod in produtosCadastrados]
 
-    produtosCadastradosSelecionados = inquirer.checkbox(
-        message="Selecione os enderecos que deseja remover (Tab):",
-        choices=opcoes,
-    ).execute()
+    produtosCadastradosSelecionados = (
+        inquirer.checkbox(  # pyright: ignore[reportPrivateImportUsage]
+            message="Selecione os enderecos que deseja remover (Tab):",
+            choices=opcoes,
+        ).execute()
+    )
 
     return produtosCadastradosSelecionados
 
 
 def selecionarProduto(produtos: list[Produto]):
-    produto = inquirer.select(
+    produto = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
         message="Selecione o produto desejado: ",
         choices=[
             Choice(
@@ -449,7 +478,7 @@ def selecionarEnderecoEntrega(enderecos: list[Endereco]):
         for end in enderecos
     ]
 
-    enderecoId = inquirer.select(
+    enderecoId = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
         message="Selecione o endereço de entrega: ",
         choices=opcoes,
     ).execute()
@@ -463,21 +492,21 @@ def getCompra(
     dataCompra = datetime.now().strftime("%d-%m-%Y")
 
     return Compra(
-        produtoId=produto.id,
-        usuarioId=usuarioId,
-        dataCompra=dataCompra,
-        enderecoEntregaId=enderecoEntregaId,
-        nomeProduto=produto.nome,
+        id_produto=produto.id,
+        id_usuario=usuarioId,
+        data_compra=dataCompra,
+        id_endereco_entrega=enderecoEntregaId,
+        nome_produto=produto.nome,
         precoEmCentavos=produto.precoEmCentavos,
-        nomeUsuario=nomeUsuario,
-        nomeLoja=produto.vendedor.nome_loja,
+        nome_usuario=nomeUsuario,
+        nome_loja=produto.vendedor.nome_loja,
     )
 
 
 def getCompraUpdate(compra: Compra, enderecos: list[Endereco]):
     print("Dados em branco serão considerados sem alteração")
 
-    alterarEndereco = inquirer.confirm(
+    alterarEndereco = inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
         message="Deseja alterar o endereço de entrega?"
     ).execute()
 
@@ -485,7 +514,7 @@ def getCompraUpdate(compra: Compra, enderecos: list[Endereco]):
     if alterarEndereco:
         novoEnderecoId = selecionarEnderecoEntrega(enderecos)
 
-    novaData = inquirer.text(
+    novaData = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message=f"Nova data da compra mm-dd-aaaa ({compra.dataCompra}), "
         "deixe em branco para não alterar: "
     ).execute()
@@ -512,7 +541,7 @@ def printarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]):
     if len(produtosCadastrados) == 0:
         raise ErroException("Nenhum produto cadastrado")
 
-    produtoId = inquirer.select(
+    produtoId = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
         message="Escolha o produto que desejada remover: ",
         choices=[
             Choice(produto.produtoId, name=produto.nome)
@@ -533,10 +562,10 @@ def getLogin():
         )
     )
 
-    email = inquirer.text(
+    email = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o email do usuário: ", validate=verificarEmail
     ).execute()
-    senha = inquirer.secret(
+    senha = inquirer.secret(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite a senha do usuário: ", validate=verificarVazio
     ).execute()
 
