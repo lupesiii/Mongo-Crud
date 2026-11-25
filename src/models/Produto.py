@@ -1,14 +1,12 @@
 from typing import Annotated, Optional
-
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
-
 from models.Vendedor import VendedorProduto
 
 
 class Produto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    
-    id: Annotated[str, BeforeValidator(str)] | None = Field(default=None, alias="_id")
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
+
+    id: Annotated[str, BeforeValidator(str)] = Field(alias="_id")
     nome: str
     descricao: str
     precoEmCentavos: int = Field(ge=0)

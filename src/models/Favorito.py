@@ -1,8 +1,12 @@
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, BeforeValidator
 
 
 class Favorito(BaseModel):
-    produtoId: str | None = Field(default=None, alias="id_produto")
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
+
+    produtoId: Annotated[str, BeforeValidator(str)] = Field(alias="id_produto")
     nome: str
     imagem: str
     precoEmCentavos: int = Field(ge=0)

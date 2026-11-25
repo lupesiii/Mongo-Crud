@@ -197,11 +197,12 @@ def getUsuario():
 
     cpf_validado = Cpf(cpf=limparCpf(cpf))
     return Usuario(
+        _id=str(ObjectId()),
         nome=nome.strip(),
         sobrenome=sobrenome.strip(),
         email=email.strip(),
         senha=senha.strip(),
-        cpf=cpf_validado.cpf,
+        cpf=cpf_validado,
         favoritos=[],
         enderecos=enderecos,
     )
@@ -492,6 +493,7 @@ def getCompra(
     dataCompra = datetime.now().strftime("%d-%m-%Y")
 
     return Compra(
+        _id=str(ObjectId()),
         id_produto=produto.id,
         id_usuario=usuarioId,
         data_compra=dataCompra,

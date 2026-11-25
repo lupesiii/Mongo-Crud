@@ -48,7 +48,7 @@ def menuCompras():
             case 1:
                 email, senha = getLogin()
                 try:
-                    usuarioId = loginUsuario(email, senha)
+                    usuario = loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
 
                     nomeProduto = (
@@ -63,7 +63,7 @@ def menuCompras():
                     enderecoEntregaId = selecionarEnderecoEntrega(usuario.enderecos)
 
                     compra = getCompra(
-                        usuarioId, usuario.nome, produto, enderecoEntregaId
+                        usuario.id, usuario.nome, produto, enderecoEntregaId
                     )
                     cadastrarCompraTransaction(compra)
                 except ErroException as e:

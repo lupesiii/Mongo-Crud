@@ -17,7 +17,6 @@ def menuPrincipal():
                 border_style="cyan",
             )
         )
-
         opcao = inquirer.select(  # pyright: ignore[reportPrivateImportUsage]
             message="Escolha a coleção desejada: ",
             choices=[

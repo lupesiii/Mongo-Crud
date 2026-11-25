@@ -3,7 +3,9 @@ from models.Vendedor import Vendedor
 from models.Produto import Produto, ProdutoUpdate
 from lib.mongoConnection import db
 from db.vendedor import (
+    buscarVendedor,
     deletarVendedor,
+    existeVendedor,
     removerProdutoCadastrado,
     cadastrarProdutoCadastrado,
     atualizarProdutoCadastrado,
@@ -13,7 +15,6 @@ from db.produto import (
     deletarProduto,
     cadastrarProduto,
     atualizarProduto,
-    existeRegistro,
 )
 from db.compras import cadastrarCompra, deletarCompra
 from lib.rich import console
@@ -27,13 +28,9 @@ def deletarUsuarioTransaction(email: str):
     with db.client.start_session() as session:
         try:
             with session.start_transaction():
-                exists = existeRegistro(
-                    identificador=email,
-                    collection=db.vendedores,
-                    query={"email": email},
-                )
-
                 deletarUsuario(email, session)
+
+                exists = buscarVendedor(email)
                 if exists:
                     deletarVendedor(email, session)
         except Exception as e:

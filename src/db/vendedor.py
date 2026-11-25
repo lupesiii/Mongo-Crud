@@ -17,13 +17,12 @@ def existeVendedor(usuarioId: str):
         raise ErroException("Valor nulo não é permitido")
 
     try:
-        exists = list(db.vendedores.find({"usuario_id": usuarioId}))
-    except BaseException:
-        raise ErroException("Erro ao verificar se vendedor existe")
-
-    if len(exists) > 0:
+        vendedorEncontrado = db.vendedores.find({"usuario_id": usuarioId})
+        if vendedorEncontrado is None:
+            return False
         return True
-    return False
+    except Exception:
+        raise ErroException("Erro ao verificar se vendedor existe")
 
 
 def buscarVendedor(email: str, allow_print=True):
@@ -32,52 +31,51 @@ def buscarVendedor(email: str, allow_print=True):
     if not email:
         raise ErroException("Valor nulo não é permitido")
 
-    exists = existeUsuario(email)
-    if not exists:
-        raise ErroException("Usuário não existente")
-
     try:
-        usuario = dict(db.usuarios.find_one({"email": email}))
+        usuarioEncontrado = db.usuarios.find_one({"email": email})
+        if usuarioEncontrado is None:
+            raise ErroException("Usuário não existente")
+
+        usuario = dict(usuarioEncontrado)
         vendedor = db.vendedores.find_one({"usuario_id": str(usuario.get("_id"))})
-    except BaseException:
-        raise ErroException("Não foi possivel verificar se vendedor existe")
 
-    if not vendedor:
-        raise ErroException("Vendedor não encontrado")
+        if not vendedor:
+            raise ErroException("Vendedor não encontrado")
 
-    try:
         vendedor = Vendedor.model_validate(vendedor)
+    except ErroException:
+        raise
     except ValidationError:
         raise ErroException("Erro ao converter vendedor")
+    except Exception:
+        raise ErroException("Não foi possivel verificar se vendedor existe")
 
     if allow_print:
         printarVendedor(vendedor.nomeLoja, vendedor.produtosCadastrados)
-
     return vendedor
 
 
 def buscarTodosVendedores():
     try:
-        vendedores = list(db.vendedores.find().sort("nome_loja"))
+        vendedoresEncontrados = db.vendedores.find().sort("nome_loja")
     except Exception:
         raise ErroException("Erro ao buscar vendedores")
 
-    vendedoresValidados: list[Vendedor] = []
-    for vendedor in vendedores:
+    vendedores: list[Vendedor] = []
+    for vendedor in vendedoresEncontrados:
         try:
-            vendedoresValidados.append(Vendedor.model_validate(vendedor))
+            vendedores.append(Vendedor.model_validate(vendedor))
         except ValidationError:
             continue
 
-    if len(vendedoresValidados) == 0:
+    if len(vendedores) <= 0:
         console.print(
             Panel.fit(
                 "Nenhum vendedor encontrado",
                 border_style="red",
             )
         )
-
-    for vendedor in vendedoresValidados:
+    for vendedor in vendedores:
         printarVendedor(vendedor.nomeLoja, vendedor.produtosCadastrados)
 
 

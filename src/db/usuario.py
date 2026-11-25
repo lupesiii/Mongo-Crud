@@ -1,5 +1,5 @@
 from cli import printarUsuario
-from db.produto import existeRegistro
+from db.produto import existeProduto
 from models.ErroException import ErroException
 from models.Produto import Produto
 from models.Usuario import Usuario, UsuarioUpdate
@@ -10,6 +10,28 @@ from lib.rich import console
 from bson import ObjectId
 
 
+def loginUsuario(email: str, senha: str):
+    email = email.strip()
+    senha = senha.strip()
+    if not email or not senha:
+        raise ErroException("Valores nulos não são permitidos")
+
+    try:
+        usuarioEncontrado = db.usuarios.find_one({"email": email, "senha": senha})
+        if not usuarioEncontrado:
+            raise ErroException("Email ou senha inválido")
+
+        usuario = Usuario.model_validate(usuarioEncontrado)
+    except ErroException:
+        raise
+    except ValidationError:
+        raise ErroException("Erro ao converter usuário")
+    except Exception:
+        raise ErroException("Erro ao recuperar usuário")
+
+    return usuario
+
+
 def existeUsuario(email: str):
     email = email.strip()
 
@@ -17,13 +39,12 @@ def existeUsuario(email: str):
         raise ErroException("Valor nulo não é aceito")
 
     try:
-        exists = list(db.usuarios.find({"email": email}))
-    except BaseException:
-        raise ErroException("Erro ao verificar se usuário existe")
-
-    if len(exists) > 0:
+        usuarioEncontrado = db.usuarios.find({"email": email})
+        if usuarioEncontrado is None:
+            return False
         return True
-    return False
+    except Exception:
+        raise ErroException("Erro ao verificar se usuário existe")
 
 
 def buscarUsuario(email: str, allow_Print=True):
@@ -33,23 +54,21 @@ def buscarUsuario(email: str, allow_Print=True):
         raise ErroException("Valor nulo é inválido")
 
     try:
-        user = db.usuarios.find_one({"email": email})
-    except BaseException:
+        usuarioEncontrado = db.usuarios.find_one({"email": email})
+        if not usuarioEncontrado:
+            raise ErroException("Usuário não encontrado")
+
+        usuario = Usuario.model_validate(usuarioEncontrado)
+    except ErroException:
+        raise
+    except ValidationError:
+        raise ErroException("Erro ao converter usuário")
+    except Exception:
         raise ErroException("Erro ao recuperar usuário")
 
-    if not user:
-        raise ErroException("Usuário não encontrado")
-
-    try:
-        user = Usuario.model_validate(user)
-    except BaseException as e:
-        print(e)
-        raise ErroException("Erro ao converter usuário")
-
     if allow_Print:
-        printarUsuario(user)
-
-    return user
+        printarUsuario(usuario)
+    return usuario
 
 
 def buscarUsuarioId(email: str):
@@ -59,37 +78,40 @@ def buscarUsuarioId(email: str):
         raise ErroException("Valor nulo não é permitido")
 
     try:
-        user = db.usuarios.find_one({"email": email})
-    except BaseException:
+        usuarioEncontrado = db.usuarios.find_one({"email": email})
+        if usuarioEncontrado is None:
+            raise ErroException("Usuário não encontrado")
+
+        usuario = Usuario.model_validate(usuarioEncontrado)
+    except ErroException:
+        raise
+    except ValidationError:
+        raise ErroException("Erro ao converter usuário")
+    except Exception:
         raise ErroException("Erro ao recuperar usuário")
 
-    if not user:
-        raise ErroException("Usuário não encontrado")
-
-    return str(user.get("_id"))
+    return usuario.id
 
 
 def buscarTodosUsuarios():
     try:
-        usuarios = list(db.usuarios.find().sort("nome"))
-    except BaseException:
+        usuariosEncontrados = db.usuarios.find().sort("nome")
+        if usuariosEncontrados is None:
+            console.print(
+                Panel.fit(
+                    "Nenhum usuário encontrado",
+                    border_style="red",
+                )
+            )
+    except Exception:
         raise ErroException("Erro ao buscar usuários")
 
-    if len(usuarios) == 0:
-        console.print(
-            Panel.fit(
-                "Nenhum usuário encontrado",
-                border_style="red",
-            )
-        )
-
-    for user in usuarios:
+    for usuario in usuariosEncontrados:
         try:
-            user = Usuario.model_validate(user)
-        except BaseException as e:
+            usuario = Usuario.model_validate(usuario)
+            printarUsuario(usuario)
+        except ValidationError:
             continue
-
-        printarUsuario(user)
 
 
 def cadastrarUsuario(user: Usuario):
@@ -196,9 +218,7 @@ def adicionarFavotito(vetorProdutos: list[Produto], email: str):
 
     for produto in vetorProdutos:
         if produto.id:
-            existProduto = existeRegistro(
-                produto.id, db.produtos, {"_id": ObjectId(produto.id)}
-            )
+            existProduto = existeProduto(produto.id)
 
             if not existProduto:
                 raise ErroException("Produto não existe")
@@ -225,21 +245,3 @@ def adicionarFavotito(vetorProdutos: list[Produto], email: str):
             border_style="green",
         )
     )
-
-
-def loginUsuario(email: str, senha: str):
-    email = email.strip()
-    senha = senha.strip()
-
-    if not email or not senha:
-        raise ErroException("Valores nulos não são permitidos")
-
-    try:
-        usuario = db.usuarios.find_one({"email": email, "senha": senha})
-    except BaseException:
-        raise ErroException("Erro ao recuperar usuário")
-
-    if not usuario:
-        raise ErroException("Email ou senha inválido")
-
-    return str(usuario.get("_id"))

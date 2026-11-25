@@ -1,4 +1,4 @@
-from InquirerPy.validator import ValidationError
+from prompt_toolkit.validation import ValidationError
 from models.Cpf import Cpf
 from models.Email import Email
 from pydantic import ValidationError as PydanticValidationError
@@ -10,40 +10,27 @@ def verificarVazio(texto):
     return True
 
 
-def verificarCpf(cpf):
+def verificarCpf(cpf: str):
     verificarVazio(cpf)
-
     try:
-        CPF = Cpf(cpf=cpf)
+        Cpf(cpf=cpf)
     except PydanticValidationError:
         raise ValidationError(message="Este CPF não está válido!")
-
-    is_valid = CPF.verificar()
-    if not is_valid:
-        raise ValidationError(message="Este CPF não está válido!")
-
     return True
 
 
 def verificarCpfOpcional(cpf):
     if not cpf.strip():
         return True
-
     try:
-        CPF = Cpf(cpf=cpf)
+        Cpf(cpf=cpf)
     except PydanticValidationError:
         raise ValidationError(message="Este CPF não está válido!")
-
-    is_valid = CPF.verificar()
-    if not is_valid:
-        raise ValidationError(message="Este CPF não está válido!")
-
     return True
 
 
 def verificarEmail(email):
     verificarVazio(email)
-
     try:
         Email(email=email)
     except PydanticValidationError:
@@ -54,7 +41,6 @@ def verificarEmail(email):
 def verificarEmailOpcional(email):
     if not email.strip():
         return True
-
     try:
         Email(email=email)
     except PydanticValidationError:

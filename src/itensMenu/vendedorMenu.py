@@ -42,7 +42,7 @@ def menuVendedor():
             case 1:
                 email, senha = getLogin()
                 try:
-                    usuarioId = loginUsuario(email, senha)
+                    usuario = loginUsuario(email, senha)
                     nomeLoja = (
                         inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                             message="Digite o nome da loja: ", validate=verificarVazio
@@ -50,8 +50,9 @@ def menuVendedor():
                     )
 
                     vendedor = Vendedor(
+                        _id=str(ObjectId()),
                         nome_loja=nomeLoja,
-                        usuario_id=usuarioId,
+                        usuario_id=usuario.id,
                         produtos_cadastrados=[],
                         vendas=[],
                     )

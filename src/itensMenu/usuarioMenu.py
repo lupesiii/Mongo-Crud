@@ -63,10 +63,10 @@ def menuUsuario():
             case 4:
                 email, senha = getLogin()
                 try:
-                    usuarioId = loginUsuario(email, senha)
+                    usuario = loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
                     usuarioUpdate = getUsuarioUpdate(usuario)
-                    updateUsuario(usuarioUpdate, usuarioId)
+                    updateUsuario(usuarioUpdate, usuario.id)
                 except ErroException as e:
                     exibirErro(e.mensagem)
 

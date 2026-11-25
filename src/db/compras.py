@@ -2,7 +2,6 @@ from bson import ObjectId
 from pydantic import ValidationError
 from rich.panel import Panel
 from cli import printarCompra
-from db.produto import existeRegistro
 from lib.mongoConnection import db
 from lib.rich import console
 from models.Compra import Compra, CompraUpdate
@@ -10,7 +9,80 @@ from models.ErroException import ErroException
 
 
 def existeCompra(compraId: str):
-    return existeRegistro(compraId, db.compras, {"_id": ObjectId(compraId)})
+    compraId = compraId.strip()
+    if not compraId:
+        raise ErroException("Valor nulo não é aceito")
+
+    try:
+        compraEncontrada = db.compras.find_one({"_id": ObjectId(compraId)})
+        if compraEncontrada is None:
+            return False
+        return True
+    except Exception:
+        raise ErroException("Erro ao verificar se compra existe")
+
+
+def buscarCompra(compraId: str, allow_print=True):
+    compraId = compraId.strip()
+    if not compraId:
+        raise ErroException("Valor nulo é inválido")
+
+    try:
+        compraEncontrada = db.compras.find_one({"_id": ObjectId(compraId)})
+        if compraEncontrada is None:
+            raise ErroException("Compra não encontrada")
+
+        compra = Compra.model_validate(compraEncontrada)
+    except ErroException:
+        raise
+    except ValidationError:
+        raise ErroException("Erro ao converter compra")
+    except Exception:
+        raise ErroException("Erro ao recuperar compra")
+
+    if allow_print:
+        printarCompra(compra)
+    return compra
+
+
+def buscarComprasPorUsuario(usuarioId: str):
+    usuarioId = usuarioId.strip()
+    if not usuarioId:
+        raise ErroException("Valor nulo não é permitido")
+
+    try:
+        comprasEncontradas = db.compras.find({"id_usuario": usuarioId}).sort(
+            "data_compra"
+        )
+        if comprasEncontradas is None:
+            raise ErroException("Nenhuma compra encontrada")
+    except ErroException:
+        raise
+    except Exception:
+        raise ErroException("Erro ao buscar compras do usuário")
+
+    for compra in comprasEncontradas:
+        try:
+            compra = Compra.model_validate(compra)
+            printarCompra(compra)
+        except ValidationError:
+            continue
+
+
+def buscarTodasCompras():
+    try:
+        comprasEncontradas = db.compras.find().sort("data_compra")
+        if comprasEncontradas is None:
+            raise ErroException("Nenhuma compra encontrada")
+    except Exception:
+        raise ErroException("Erro ao buscar compras")
+
+    for compra in comprasEncontradas:
+        try:
+            compra = Compra.model_validate(compra)
+            printarCompra(compra)
+        except ValidationError:
+            continue
 
 
 def cadastrarCompra(compra: Compra, session=None):
@@ -25,70 +97,6 @@ def cadastrarCompra(compra: Compra, session=None):
         db.compras.insert_one(compraDados, session=session)
     except BaseException:
         raise ErroException("Erro ao criar registro da compra")
-
-
-def buscarCompra(compraId: str, allow_print=True):
-    compraId = compraId.strip()
-
-    if not compraId:
-        raise ErroException("Valor nulo é inválido")
-
-    try:
-        compra = db.compras.find_one({"_id": ObjectId(compraId)})
-    except Exception:
-        raise ErroException("Erro ao recuperar compra")
-
-    if not compra:
-        raise ErroException("Compra não encontrada")
-
-    try:
-        compra = Compra.model_validate(compra)
-    except ValidationError:
-        raise ErroException("Erro ao converter compra")
-
-    if allow_print:
-        printarCompra(compra)
-
-    return compra
-
-
-def buscarComprasPorUsuario(usuarioId: str):
-    usuarioId = usuarioId.strip()
-
-    if not usuarioId:
-        raise ErroException("Valor nulo não é permitido")
-
-    try:
-        compras = list(db.compras.find({"id_usuario": usuarioId}).sort("data_compra"))
-    except Exception:
-        raise ErroException("Erro ao buscar compras do usuário")
-
-    if len(compras) == 0:
-        raise ErroException("Nenhuma compra encontrada")
-
-    for compra in compras:
-        try:
-            compra = Compra.model_validate(compra)
-        except BaseException:
-            continue
-        printarCompra(compra)
-
-
-def buscarTodasCompras():
-    try:
-        compras = list(db.compras.find().sort("data_compra"))
-    except Exception:
-        raise ErroException("Erro ao buscar compras")
-
-    if len(compras) == 0:
-        raise ErroException("Nenhuma compra encontrada")
-
-    for compra in compras:
-        try:
-            compra = Compra.model_validate(compra)
-        except BaseException:
-            continue
-        printarCompra(compra)
 
 
 def atualizarCompra(compraUpdate: CompraUpdate, compraId: str):
