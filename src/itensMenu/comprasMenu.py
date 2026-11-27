@@ -5,7 +5,7 @@ from cli import (
     exibirErro,
     getCompra,
     getCompraUpdate,
-    getLogin,
+    promptLogin,
     selecionarEnderecoEntrega,
     selecionarProduto,
 )
@@ -46,7 +46,7 @@ def menuCompras():
 
         match opcao:
             case 1:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 try:
                     usuario = loginUsuario(email, senha)
                     usuario = buscarUsuario(email, False)
@@ -83,7 +83,7 @@ def menuCompras():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 compraId = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()
@@ -103,7 +103,7 @@ def menuCompras():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 compraId = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
                     message="Digite o id da compra: ", validate=verificarVazio
                 ).execute()

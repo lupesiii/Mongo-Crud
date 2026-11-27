@@ -177,7 +177,7 @@ def printarCompra(compra: Compra):
     )
 
 
-def getUsuario():
+def promptUsuario():
     nome = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o nome do usuário: ", validate=verificarVazio
     ).execute()
@@ -193,19 +193,67 @@ def getUsuario():
     cpf = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
         message="Digite o CPF do usuário: ", validate=verificarCpf
     ).execute()
-    enderecos = getEnderecos()
+    enderecos = promptEnderecos()
 
-    cpf_validado = Cpf(cpf=limparCpf(cpf))
     return Usuario(
         _id=str(ObjectId()),
         nome=nome.strip(),
         sobrenome=sobrenome.strip(),
         email=email.strip(),
         senha=senha.strip(),
-        cpf=cpf_validado,
+        cpf=Cpf(cpf=limparCpf(cpf)),
         favoritos=[],
         enderecos=enderecos,
     )
+
+
+def promptEnderecos():
+    enderecos: list[Endereco] = []
+    while True:
+        rua = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Rua: ", validate=verificarVazio
+        ).execute()
+        numero = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Número: ", validate=verificarVazio
+        ).execute()
+        bairro = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Bairro: ", validate=verificarVazio
+        ).execute()
+        cidade = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
+            message="Cidade: ", validate=verificarVazio
+        ).execute()
+        default = inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
+            message="Esse é o endereço padrão?"
+        ).execute()
+        continuar = inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
+            message="Deseja adicionar mais um endereço? "
+        ).execute()
+
+        if not continuar and len(enderecos) == 0:
+            default = True
+
+        try:
+            novoEndereco = Endereco.model_validate(
+                {
+                    "id": str(ObjectId()),
+                    "rua": rua.strip(),
+                    "numero": numero.strip(),
+                    "bairro": bairro.strip(),
+                    "cidade": cidade.strip(),
+                    "default": default,
+                }
+            )
+
+            if novoEndereco.default:
+                for endereco in enderecos:
+                    endereco.default = False
+
+            enderecos.append(novoEndereco)
+        except PydanticValidationError:
+            raise PydanticValidationError("Formato de endereço não suportado")
+
+        if not continuar:
+            return enderecos
 
 
 def getProduto(vendedorProduto: VendedorProduto):
@@ -236,54 +284,6 @@ def getProduto(vendedorProduto: VendedorProduto):
         imagem=imagem.strip(),
         vendedor=vendedorProduto,
     )
-
-
-def getEnderecos():
-    enderecos: list[Endereco] = []
-
-    while True:
-        rua = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
-            message="Rua: ", validate=verificarVazio
-        ).execute()
-        numero = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
-            message="Número: ", validate=verificarVazio
-        ).execute()
-        bairro = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
-            message="Bairro: ", validate=verificarVazio
-        ).execute()
-        cidade = inquirer.text(  # pyright: ignore[reportPrivateImportUsage]
-            message="Cidade: ", validate=verificarVazio
-        ).execute()
-        default = inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
-            message="Esse é o endereço padrão?"
-        ).execute()
-
-        try:
-            novoEndereco = Endereco.model_validate(
-                {
-                    "id": str(ObjectId()),
-                    "rua": rua.strip(),
-                    "numero": numero.strip(),
-                    "bairro": bairro.strip(),
-                    "cidade": cidade.strip(),
-                    "default": default,
-                }
-            )
-        except PydanticValidationError:
-            raise PydanticValidationError("Formato de endereço não suportado")
-
-        if novoEndereco.default:
-            for i in range(len(enderecos)):
-                if not enderecos[i].default:
-                    continue
-                enderecos[i].default = False
-
-        enderecos.append(novoEndereco)
-
-        if not inquirer.confirm(  # pyright: ignore[reportPrivateImportUsage]
-            message="Deseja adicionar mais um endereço? "
-        ).execute():
-            return enderecos
 
 
 def getUsuarioUpdate(usuario: Usuario):
@@ -554,7 +554,7 @@ def printarProdutosCadastrados(produtosCadastrados: list[ProdutosCadastrados]):
     return produtoId
 
 
-def getLogin():
+def promptLogin():
     console.print(
         Panel(
             "[bold cyan]🔑 Login[/bold cyan]",

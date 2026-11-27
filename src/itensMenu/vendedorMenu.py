@@ -10,7 +10,7 @@ from db.vendedor import (
 )
 from lib.rich import console
 from rich.panel import Panel
-from cli import exibirErro, getLogin, getVendedorUpdate
+from cli import exibirErro, promptLogin, getVendedorUpdate
 from lib.inquirrerPy import verificarEmail, verificarVazio
 from models.ErroException import ErroException
 from models.Vendedor import Vendedor
@@ -40,7 +40,7 @@ def menuVendedor():
 
         match opcao:
             case 1:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 try:
                     usuario = loginUsuario(email, senha)
                     nomeLoja = (
@@ -73,7 +73,7 @@ def menuVendedor():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 try:
                     loginUsuario(email, senha)
                     vendedor = buscarVendedor(email, False)
@@ -82,7 +82,7 @@ def menuVendedor():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 try:
                     loginUsuario(email, senha)
                     deletarVendedor(email, None)

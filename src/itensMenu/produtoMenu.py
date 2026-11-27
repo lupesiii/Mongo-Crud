@@ -17,7 +17,7 @@ from lib.rich import console
 from rich.panel import Panel
 from cli import (
     exibirErro,
-    getLogin,
+    promptLogin,
     getProduto,
     getProdutoUpdate,
     printarProdutosCadastrados,
@@ -50,7 +50,7 @@ def menuProduto():
 
         match opcao:
             case 1:
-                email, senha = getLogin()
+                email, senha = promptLogin()
                 try:
                     loginUsuario(email, senha)
                     vendedor = buscarVendedor(email, False)
@@ -75,7 +75,7 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 4:
-                email, senha = getLogin()
+                email, senha = promptLogin()
 
                 try:
                     loginUsuario(email, senha)
@@ -87,7 +87,7 @@ def menuProduto():
                 except ErroException as e:
                     exibirErro(e.mensagem)
             case 5:
-                email, senha = getLogin()
+                email, senha = promptLogin()
 
                 try:
                     loginUsuario(email, senha)

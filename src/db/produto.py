@@ -98,7 +98,7 @@ def buscarProdutosParaCompra(nome: str):
     return produtos
 
 
-def buscarTodosProdutos():
+def buscarTodosProdutos(allowPrint=True):
     try:
         produtosEncontrados = db.produtos.find().sort("nome")
         if produtosEncontrados is None:
@@ -108,12 +108,16 @@ def buscarTodosProdutos():
     except Exception:
         raise ErroException("Não foi possivel verificar se produto existe")
 
+    produtos: list[Produto] = []
     for produto in produtosEncontrados:
         try:
             produto = Produto.model_validate(produto)
+            produtos.append(produto)
+            if allowPrint:
+                printarProduto(produto)
         except Exception as e:
             continue
-        printarProduto(produto)
+    return produtos
 
 
 def cadastrarProduto(produto: Produto, session):

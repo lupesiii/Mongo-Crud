@@ -29,13 +29,11 @@ def deletarUsuarioTransaction(email: str):
         try:
             with session.start_transaction():
                 deletarUsuario(email, session)
-
-                exists = buscarVendedor(email)
-                if exists:
+                vendedorExiste = buscarVendedor(email)
+                if vendedorExiste:
                     deletarVendedor(email, session)
-        except Exception as e:
-            print(e)
-            raise ErroException("Erro ao deletar usuário")
+        except ErroException:
+            raise
 
     console.print(
         Panel(

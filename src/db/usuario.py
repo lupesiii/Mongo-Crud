@@ -1,12 +1,14 @@
 from cli import printarUsuario
 from db.produto import existeProduto
 from models.ErroException import ErroException
+from models.Favorito import Favorito
 from models.Produto import Produto
 from models.Usuario import Usuario, UsuarioUpdate
 from lib.mongoConnection import db
 from rich.panel import Panel
 from pydantic import ValidationError
 from lib.rich import console
+from pymongo.client_session import ClientSession
 from bson import ObjectId
 
 
@@ -114,36 +116,37 @@ def buscarTodosUsuarios():
             continue
 
 
-def cadastrarUsuario(user: Usuario):
+def cadastrarUsuario(usuario: Usuario):
     try:
-        user = Usuario.model_validate(user)
+        usuario = Usuario.model_validate(usuario)
     except ValidationError:
         raise ErroException("Formato de usuário não suportado")
 
-    exists = existeUsuario(user.email)
-    if exists:
+    usuarioExiste = existeUsuario(usuario.email)
+    if usuarioExiste:
         raise ErroException("Usuário já existe")
 
-    user_dump = user.model_dump()
-    user_dump = {
-        key: value["cpf"] if key == "cpf" else value for key, value in user_dump.items()
+    usuario_dump = usuario.model_dump()
+    usuario_dump = {
+        key: value["cpf"] if key == "cpf" else value
+        for key, value in usuario_dump.items()
     }
+
     try:
-        db.usuarios.insert_one(user_dump)
-    except BaseException as e:
-        print(e)
+        db.usuarios.insert_one(usuario_dump)
+    except Exception:
         raise ErroException("Erro ao criar registro do usuário")
 
     console.print(
         Panel(
-            f"[bold green]✓ Usuário {user.nome} cadastrado com sucesso![/bold green]",
+            f"[bold green]✓ Usuário {usuario.nome} cadastrado com sucesso![/bold green]",
             title="Cadastro",
             border_style="green",
         )
     )
 
 
-def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
+def atualizarUsuario(usuario: UsuarioUpdate, usuarioId: str):
     try:
         usuarioUpdate = UsuarioUpdate.model_validate(usuario)
     except ValidationError:
@@ -165,7 +168,7 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
         raise ErroException("Nenhum campo para atualizar foi informado")
 
     try:
-        resultado = db.usuarios.update_one(
+        usuarioAtualizado = db.usuarios.update_one(
             {"_id": ObjectId(usuarioId)},
             {
                 "$set": usuarioUpdateDump,
@@ -175,8 +178,13 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
                 },
             },
         )
-    except Exception as e:
-        print(e)
+
+        if usuarioAtualizado.modified_count == 0:
+            raise ErroException("Nenhum usuário modificado")
+
+    except ErroException:
+        raise
+    except Exception:
         raise ErroException("Erro ao atualizar usuário")
 
     console.print(
@@ -188,54 +196,65 @@ def updateUsuario(usuario: UsuarioUpdate, usuarioId: str):
     )
 
 
-def deletarUsuario(email, session):
+def deletarUsuario(email, session: ClientSession):
     email = email.strip()
-
     if not email:
         raise ErroException("Valor nulo é inválido")
 
-    exists = existeUsuario(email)
-    if not exists:
+    usuarioExiste = existeUsuario(email)
+    if not usuarioExiste:
         raise ErroException("Usuário não existente")
 
     try:
         db.usuarios.delete_one({"email": email}, session=session)
-    except BaseException:
+    except Exception:
         raise ErroException("Usuário não foi deletado")
 
 
 def adicionarFavotito(vetorProdutos: list[Produto], email: str):
     email = email.strip()
-
     if not email:
         raise ErroException("Valor nulo é inválido")
 
-    existsUsuario = existeUsuario(email)
-    if not existsUsuario:
+    usuarioExiste = existeUsuario(email)
+    if not usuarioExiste:
         raise ErroException("Usuário não existe")
 
-    produtosId = []
-
+    favoritos: list[Favorito] = []
     for produto in vetorProdutos:
-        if produto.id:
-            existProduto = existeProduto(produto.id)
+        produtoExiste = existeProduto(produto.id)
 
-            if not existProduto:
-                raise ErroException("Produto não existe")
+        if not produtoExiste:
+            raise ErroException("Produto não existe")
 
-            produtosId.append({"id_produto": produto.id})
+        try:
+            favoritos.append(
+                Favorito(
+                    id_produto=produto.id,
+                    nome=produto.nome,
+                    imagem=produto.imagem,
+                    precoEmCentavos=produto.precoEmCentavos,
+                )
+            )
+        except ValidationError:
+            continue
 
     try:
-        resultado = db.usuarios.update_one(
+        usuarioAtualizado = db.usuarios.update_one(
             {"email": email},
             {
                 "$addToSet": {
-                    "favoritos": {"$each": produtosId},
+                    "favoritos": {"$each": favoritos},
                 },
             },
         )
-    except Exception as e:
-        print(e)
+
+        if usuarioAtualizado.modified_count == 0:
+            raise ErroException("Nenhum usuário encontrado")
+
+    except ErroException:
+        raise
+    except Exception:
         raise ErroException("Erro ao adicionar favoritos ao usuário")
 
     console.print(

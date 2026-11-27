@@ -8,6 +8,7 @@ from models.ErroException import ErroException
 from models.Vendedor import Vendedor, ProdutosCadastrados
 from models.Produto import Produto
 from bson import ObjectId
+from pymongo.client_session import ClientSession
 
 
 def existeVendedor(usuarioId: str):
@@ -131,18 +132,16 @@ def atualizarVendedor(vendedorId: str, nomeLoja: str):
     )
 
 
-def deletarVendedor(email: str, session):
+def deletarVendedor(email: str, session: ClientSession | None):
     vendedor = buscarVendedor(email, False)
-
     try:
-        resultado = db.vendedores.delete_one(
+        vendedorDeletado = db.vendedores.delete_one(
             {"_id": ObjectId(vendedor.id)}, session=session if session else None
         )
-
-    except BaseException:
+    except Exception:
         raise ErroException("Vendedor não foi deletado")
 
-    if resultado.deleted_count == 0:
+    if vendedorDeletado.deleted_count == 0:
         raise ErroException("Vendedor não encontrado")
 
     console.print(
